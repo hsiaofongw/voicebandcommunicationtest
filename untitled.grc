@@ -314,7 +314,7 @@ blocks:
     bus_structure: null
     coordinate: [888, 872.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: blocks_unpack_k_bits_bb_1
   id: blocks_unpack_k_bits_bb
   parameters:
@@ -330,7 +330,7 @@ blocks:
     bus_structure: null
     coordinate: [1600, 416.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: digital_constellation_decoder_cb_0
   id: digital_constellation_decoder_cb
   parameters:
@@ -346,7 +346,7 @@ blocks:
     bus_structure: null
     coordinate: [256, 792.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: digital_constellation_modulator_0
   id: digital_constellation_modulator
   parameters:
@@ -368,7 +368,7 @@ blocks:
     bus_structure: null
     coordinate: [1560, 264.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: digital_correlate_access_code_xx_ts_0
   id: digital_correlate_access_code_xx_ts
   parameters:
@@ -403,9 +403,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [808, 544.0]
+    coordinate: [1088, 528.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: digital_crc32_bb_0
   id: digital_crc32_bb
   parameters:
@@ -458,7 +458,28 @@ blocks:
     bus_structure: null
     coordinate: [504, 804.0]
     rotation: 0
-    state: disabled
+    state: enabled
+- name: digital_linear_equalizer_0
+  id: digital_linear_equalizer
+  parameters:
+    adapt_after_training: 'True'
+    affinity: ''
+    alg: variable_adaptive_algorithm_0
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_taps: '11'
+    sps: '2'
+    training_sequence: '[ ]'
+    training_start_tag: corr_est
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [816, 544.0]
+    rotation: 0
+    state: enabled
 - name: digital_map_bb_0
   id: digital_map_bb
   parameters:
@@ -474,7 +495,7 @@ blocks:
     bus_structure: null
     coordinate: [720, 840.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: digital_pfb_clock_sync_xxx_0
   id: digital_pfb_clock_sync_xxx
   parameters:
@@ -497,7 +518,7 @@ blocks:
     bus_structure: null
     coordinate: [504, 520.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: digital_protocol_formatter_bb_0
   id: digital_protocol_formatter_bb
   parameters:
@@ -532,7 +553,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1824, 288.0]
+    coordinate: [1824, 208.0]
     rotation: 0
     state: disabled
 - name: freq_xlating_fir_filter_xxx_1
@@ -552,7 +573,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [232, 560.0]
+    coordinate: [240, 456.0]
     rotation: 0
     state: disabled
 - name: qtgui_const_sink_x_0
@@ -644,9 +665,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1112, 644.0]
+    coordinate: [1336, 620.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: qtgui_time_sink_x_0
   id: qtgui_time_sink_x
   parameters:
@@ -756,7 +777,7 @@ blocks:
     bus_structure: null
     coordinate: [1072, 896.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: virtual_sink_1
   id: virtual_sink
   parameters:
@@ -769,7 +790,7 @@ blocks:
     bus_structure: null
     coordinate: [1808, 440.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: virtual_sink_2
   id: virtual_sink
   parameters:
@@ -782,7 +803,7 @@ blocks:
     bus_structure: null
     coordinate: [2072, 320.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: virtual_sink_3
   id: virtual_sink
   parameters:
@@ -793,9 +814,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1120, 560.0]
+    coordinate: [1320, 552.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: virtual_source_0
   id: virtual_source
   parameters:
@@ -821,7 +842,7 @@ blocks:
     bus_structure: null
     coordinate: [16, 568.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: virtual_source_3
   id: virtual_source
   parameters:
@@ -834,7 +855,7 @@ blocks:
     bus_structure: null
     coordinate: [16, 752.0]
     rotation: 0
-    state: disabled
+    state: enabled
 
 connections:
 - [analog_random_source_x_0, '0', blocks_throttle2_0, '0']
@@ -849,6 +870,7 @@ connections:
 - [blocks_unpack_k_bits_bb_1, '0', virtual_sink_1, '0']
 - [digital_constellation_decoder_cb_0, '0', digital_diff_decoder_bb_0, '0']
 - [digital_constellation_modulator_0, '0', freq_xlating_fir_filter_xxx_0, '0']
+- [digital_constellation_modulator_0, '0', virtual_sink_2, '0']
 - [digital_correlate_access_code_xx_ts_0, '0', blocks_repack_bits_bb_0, '0']
 - [digital_costas_loop_cc_0, '0', qtgui_const_sink_x_0, '0']
 - [digital_costas_loop_cc_0, '0', virtual_sink_3, '0']
@@ -856,12 +878,14 @@ connections:
 - [digital_crc32_bb_0, '0', digital_protocol_formatter_bb_0, '0']
 - [digital_crc32_bb_1, '0', blocks_uchar_to_float_0, '0']
 - [digital_diff_decoder_bb_0, '0', digital_map_bb_0, '0']
+- [digital_linear_equalizer_0, '0', digital_costas_loop_cc_0, '0']
 - [digital_map_bb_0, '0', blocks_unpack_k_bits_bb_0, '0']
-- [digital_pfb_clock_sync_xxx_0, '0', digital_costas_loop_cc_0, '0']
+- [digital_pfb_clock_sync_xxx_0, '0', digital_linear_equalizer_0, '0']
 - [digital_protocol_formatter_bb_0, '0', blocks_tagged_stream_mux_0, '0']
 - [freq_xlating_fir_filter_xxx_0, '0', virtual_sink_2, '0']
 - [freq_xlating_fir_filter_xxx_1, '0', digital_pfb_clock_sync_xxx_0, '0']
 - [virtual_source_0, '0', digital_correlate_access_code_xx_ts_0, '0']
+- [virtual_source_2, '0', digital_pfb_clock_sync_xxx_0, '0']
 - [virtual_source_2, '0', freq_xlating_fir_filter_xxx_1, '0']
 - [virtual_source_3, '0', digital_constellation_decoder_cb_0, '0']
 
