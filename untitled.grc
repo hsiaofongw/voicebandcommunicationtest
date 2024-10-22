@@ -172,7 +172,7 @@ blocks:
     bus_structure: null
     coordinate: [64, 368.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: analog_sig_source_x_0
   id: analog_sig_source_x
   parameters:
@@ -193,7 +193,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1792, 20.0]
+    coordinate: [1856, 124.0]
     rotation: 0
     state: enabled
 - name: analog_sig_source_x_0_0
@@ -216,7 +216,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [24, 460.0]
+    coordinate: [8, 468.0]
     rotation: 0
     state: enabled
 - name: blocks_char_to_float_0
@@ -249,7 +249,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1960, 160.0]
+    coordinate: [2064, 152.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_float_0_0
@@ -281,7 +281,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1816, 272.0]
+    coordinate: [2064, 256.0]
     rotation: 0
     state: enabled
 - name: blocks_file_sink_0
@@ -323,7 +323,7 @@ blocks:
     bus_structure: null
     coordinate: [16, 216.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: blocks_float_to_complex_0
   id: blocks_float_to_complex
   parameters:
@@ -391,7 +391,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2184, 120.0]
+    coordinate: [2256, 96.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_xx_0_0
@@ -409,7 +409,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2184, 224.0]
+    coordinate: [2264, 232.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_xx_0_0_0
@@ -502,7 +502,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2344, 160.0]
+    coordinate: [2392, 160.0]
     rotation: 0
     state: enabled
 - name: blocks_tag_gate_0
@@ -565,6 +565,27 @@ blocks:
     coordinate: [216, 316.0]
     rotation: 0
     state: enabled
+- name: blocks_throttle2_1
+  id: blocks_throttle2
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    ignoretag: 'True'
+    limit: auto
+    maximum: '0.1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samples_per_second: samp_rate
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2384, 392.0]
+    rotation: 0
+    state: enabled
 - name: blocks_unpack_k_bits_bb_0
   id: blocks_unpack_k_bits_bb
   parameters:
@@ -579,6 +600,28 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [888, 872.0]
+    rotation: 0
+    state: enabled
+- name: blocks_wavfile_sink_0
+  id: blocks_wavfile_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    append: 'False'
+    bits_per_sample1: FORMAT_PCM_16
+    bits_per_sample2: FORMAT_PCM_16
+    bits_per_sample3: FORMAT_VORBIS
+    bits_per_sample4: FORMAT_PCM_16
+    comment: ''
+    file: wav_out
+    format: FORMAT_WAV
+    nchan: '1'
+    samp_rate: samp_rate
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2544, 392.0]
     rotation: 0
     state: enabled
 - name: dest_host
@@ -902,7 +945,7 @@ blocks:
     bus_structure: null
     coordinate: [1120, 1184.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: out_file
   id: parameter
   parameters:
@@ -1090,7 +1133,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2504, 272.0]
+    coordinate: [2528, 248.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_0
@@ -1230,7 +1273,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2488, 184.0]
+    coordinate: [2552, 184.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_3
@@ -1285,6 +1328,23 @@ blocks:
     coordinate: [16, 752.0]
     rotation: 0
     state: enabled
+- name: wav_out
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Wave file output filename
+    short_id: ''
+    type: str
+    value: out.wav
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1744, 28.0]
+    rotation: 0
+    state: enabled
 
 connections:
 - [analog_random_source_x_0, '0', blocks_throttle2_0, '0']
@@ -1307,11 +1367,13 @@ connections:
 - [blocks_multiply_xx_0_1, '0', blocks_multiply_const_vxx_0, '0']
 - [blocks_repack_bits_bb_0, '0', digital_crc32_bb_1, '0']
 - [blocks_stream_to_tagged_stream_0, '0', digital_crc32_bb_0, '0']
+- [blocks_sub_xx_0, '0', blocks_throttle2_1, '0']
 - [blocks_sub_xx_0, '0', qtgui_freq_sink_x_1, '0']
 - [blocks_sub_xx_0, '0', virtual_sink_1, '0']
 - [blocks_tag_gate_0, '0', digital_constellation_modulator_0, '0']
 - [blocks_tagged_stream_mux_0, '0', blocks_tag_gate_0, '0']
 - [blocks_throttle2_0, '0', blocks_stream_to_tagged_stream_0, '0']
+- [blocks_throttle2_1, '0', blocks_wavfile_sink_0, '0']
 - [blocks_unpack_k_bits_bb_0, '0', virtual_sink_0, '0']
 - [digital_constellation_decoder_cb_0, '0', digital_diff_decoder_bb_0, '0']
 - [digital_constellation_modulator_0, '0', blocks_complex_to_float_1, '0']
