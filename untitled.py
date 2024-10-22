@@ -31,7 +31,7 @@ import sip
 
 class untitled(gr.top_block, Qt.QWidget):
 
-    def __init__(self, dest_host='127.0.0.1', dest_port='42028', in_file="in.bin", out_file="out.bin", sps=48, wav_out='out.wav'):
+    def __init__(self, dest_host='127.0.0.1', dest_port='42028', in_file="in.bin", out_file="out.bin", sps=64, wav_out='out.wav'):
         gr.top_block.__init__(self, "Not titled yet", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("Not titled yet")
@@ -275,7 +275,7 @@ class untitled(gr.top_block, Qt.QWidget):
         self.blocks_tag_gate_0 = blocks.tag_gate(gr.sizeof_char * 1, False)
         self.blocks_tag_gate_0.set_single_key("")
         self.blocks_sub_xx_0 = blocks.sub_ff(1)
-        self.blocks_stream_to_tagged_stream_0 = blocks.stream_to_tagged_stream(gr.sizeof_char, 1, 128, "packet_len")
+        self.blocks_stream_to_tagged_stream_0 = blocks.stream_to_tagged_stream(gr.sizeof_char, 1, 32, "packet_len")
         self.blocks_repack_bits_bb_0 = blocks.repack_bits_bb(1, 8, "packet_len", False, gr.GR_MSB_FIRST)
         self.blocks_multiply_xx_0_1 = blocks.multiply_vff(1)
         self.blocks_multiply_xx_0_0_0 = blocks.multiply_vff(1)
@@ -472,7 +472,7 @@ def argument_parser():
         "--out-file", dest="out_file", type=str, default="out.bin",
         help="Set Output filename [default=%(default)r]")
     parser.add_argument(
-        "--sps", dest="sps", type=intx, default=48,
+        "--sps", dest="sps", type=intx, default=64,
         help="Set Samples per Symbol [default=%(default)r]")
     parser.add_argument(
         "--wav-out", dest="wav_out", type=str, default='out.wav',
