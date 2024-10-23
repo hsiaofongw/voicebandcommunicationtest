@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: Not titled yet
+# Title: QPSK transceiving test
 # GNU Radio version: 3.10.9.2
 
 from PyQt5 import Qt
@@ -30,12 +30,12 @@ import sip
 
 
 
-class untitled(gr.top_block, Qt.QWidget):
+class qpsktransceive(gr.top_block, Qt.QWidget):
 
     def __init__(self, dest_host='127.0.0.1', dest_port='42028', filtersize=8, in_file="in.bin", noisevoltage=0.1, out_file="out.bin", pktsize=32, sps=64, txgain=1, wav_out='out.wav'):
-        gr.top_block.__init__(self, "Not titled yet", catch_exceptions=True)
+        gr.top_block.__init__(self, "QPSK transceiving test", catch_exceptions=True)
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("Not titled yet")
+        self.setWindowTitle("QPSK transceiving test")
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
@@ -53,7 +53,7 @@ class untitled(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "untitled")
+        self.settings = Qt.QSettings("GNU Radio", "qpsktransceive")
 
         try:
             geometry = self.settings.value("geometry")
@@ -402,7 +402,7 @@ class untitled(gr.top_block, Qt.QWidget):
 
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "untitled")
+        self.settings = Qt.QSettings("GNU Radio", "qpsktransceive")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -579,7 +579,7 @@ def argument_parser():
     return parser
 
 
-def main(top_block_cls=untitled, options=None):
+def main(top_block_cls=qpsktransceive, options=None):
     if options is None:
         options = argument_parser().parse_args()
 
