@@ -157,7 +157,7 @@ class testsoundreceive(gr.top_block, Qt.QWidget):
             1,
             samp_rate,
             blocks.FORMAT_WAV,
-            blocks.FORMAT_PCM_16,
+            blocks.FORMAT_FLOAT,
             False
             )
         self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_float*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )

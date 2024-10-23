@@ -142,7 +142,7 @@ blocks:
     alpha: '0.35'
     comment: ''
     gain: sps+1
-    ntaps: 11*sps
+    ntaps: sps*4
     samp_rate: samp_rate
     sym_rate: samp_rate/sps
     value: ''
@@ -498,7 +498,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    filter_size: '8'
+    filter_size: filtersize
     init_phase: '0'
     loop_bw: 2*3.14/100
     max_dev: '1.5'
@@ -513,6 +513,23 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [1216, 504.0]
+    rotation: 0
+    state: enabled
+- name: filtersize
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Polyphase Clock Sync Filter size
+    short_id: ''
+    type: intx
+    value: '8'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1632, 148.0]
     rotation: 0
     state: enabled
 - name: low_pass_filter_0

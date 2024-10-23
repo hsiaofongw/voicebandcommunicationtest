@@ -31,7 +31,7 @@ import sip
 
 class qpskreceiver(gr.top_block, Qt.QWidget):
 
-    def __init__(self, dest_host='127.0.0.1', dest_port='42028', sps=64, zmqsource='tcp://127.0.0.1:13535'):
+    def __init__(self, dest_host='127.0.0.1', dest_port='42028', filtersize=8, sps=64, zmqsource='tcp://127.0.0.1:13535'):
         gr.top_block.__init__(self, "QPSK Receiver", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("QPSK Receiver")
@@ -66,6 +66,7 @@ class qpskreceiver(gr.top_block, Qt.QWidget):
         ##################################################
         self.dest_host = dest_host
         self.dest_port = dest_port
+        self.filtersize = filtersize
         self.sps = sps
         self.zmqsource = zmqsource
 
@@ -77,7 +78,7 @@ class qpskreceiver(gr.top_block, Qt.QWidget):
         self.variable_constellation_0.set_npwr(1.0)
         self.samp_rate = samp_rate = 48000
         self.access_code = access_code = "11100001010110101110100010010011"
-        self.variable_rrc_filter_taps_0 = variable_rrc_filter_taps_0 = firdes.root_raised_cosine(sps+1, samp_rate,samp_rate/sps, 0.35, (11*sps))
+        self.variable_rrc_filter_taps_0 = variable_rrc_filter_taps_0 = firdes.root_raised_cosine(sps+1, samp_rate,samp_rate/sps, 0.35, (sps*4))
         self.variable_low_pass_filter_taps_0 = variable_low_pass_filter_taps_0 = firdes.low_pass(1.0, samp_rate, 10e3,1e3, window.WIN_HAMMING, 6.76)
         self.variable_adaptive_algorithm_0 = variable_adaptive_algorithm_0 = digital.adaptive_algorithm_cma( variable_constellation_0, .0001, 4).base()
         self.passband_fc = passband_fc = 1700
@@ -275,7 +276,7 @@ class qpskreceiver(gr.top_block, Qt.QWidget):
                 1e3,
                 window.WIN_HAMMING,
                 6.76))
-        self.digital_pfb_clock_sync_xxx_0 = digital.pfb_clock_sync_ccf(sps, (2*3.14/100), variable_rrc_filter_taps_0, 8, 0, 1.5, 2)
+        self.digital_pfb_clock_sync_xxx_0 = digital.pfb_clock_sync_ccf(sps, (2*3.14/100), variable_rrc_filter_taps_0, filtersize, 0, 1.5, 2)
         self.digital_map_bb_0 = digital.map_bb([0,1,3,2])
         self.digital_linear_equalizer_0 = digital.linear_equalizer(15, 2, variable_adaptive_algorithm_0, True, [ ], 'corr_est')
         self.digital_diff_decoder_bb_0 = digital.diff_decoder_bb(4, digital.DIFF_DIFFERENTIAL)
@@ -348,12 +349,18 @@ class qpskreceiver(gr.top_block, Qt.QWidget):
     def set_dest_port(self, dest_port):
         self.dest_port = dest_port
 
+    def get_filtersize(self):
+        return self.filtersize
+
+    def set_filtersize(self, filtersize):
+        self.filtersize = filtersize
+
     def get_sps(self):
         return self.sps
 
     def set_sps(self, sps):
         self.sps = sps
-        self.set_variable_rrc_filter_taps_0(firdes.root_raised_cosine(self.sps+1, self.samp_rate, self.samp_rate/self.sps, 0.35, (11*self.sps)))
+        self.set_variable_rrc_filter_taps_0(firdes.root_raised_cosine(self.sps+1, self.samp_rate, self.samp_rate/self.sps, 0.35, (self.sps*4)))
 
     def get_zmqsource(self):
         return self.zmqsource
@@ -374,7 +381,7 @@ class qpskreceiver(gr.top_block, Qt.QWidget):
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
         self.set_variable_low_pass_filter_taps_0(firdes.low_pass(1.0, self.samp_rate, 10e3, 1e3, window.WIN_HAMMING, 6.76))
-        self.set_variable_rrc_filter_taps_0(firdes.root_raised_cosine(self.sps+1, self.samp_rate, self.samp_rate/self.sps, 0.35, (11*self.sps)))
+        self.set_variable_rrc_filter_taps_0(firdes.root_raised_cosine(self.sps+1, self.samp_rate, self.samp_rate/self.sps, 0.35, (self.sps*4)))
         self.analog_sig_source_x_0_0.set_sampling_freq(self.samp_rate)
         self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, self.passband_fc, 1e3, window.WIN_HAMMING, 6.76))
         self.low_pass_filter_0_0.set_taps(firdes.low_pass(1, self.samp_rate, self.passband_fc, 1e3, window.WIN_HAMMING, 6.76))
@@ -434,6 +441,9 @@ def argument_parser():
         "--dest-port", dest="dest_port", type=str, default='42028',
         help="Set Destination Port [default=%(default)r]")
     parser.add_argument(
+        "--filtersize", dest="filtersize", type=intx, default=8,
+        help="Set Polyphase Clock Sync Filter size [default=%(default)r]")
+    parser.add_argument(
         "--sps", dest="sps", type=intx, default=64,
         help="Set Samples per Symbol [default=%(default)r]")
     parser.add_argument(
@@ -448,7 +458,7 @@ def main(top_block_cls=qpskreceiver, options=None):
 
     qapp = Qt.QApplication(sys.argv)
 
-    tb = top_block_cls(dest_host=options.dest_host, dest_port=options.dest_port, sps=options.sps, zmqsource=options.zmqsource)
+    tb = top_block_cls(dest_host=options.dest_host, dest_port=options.dest_port, filtersize=options.filtersize, sps=options.sps, zmqsource=options.zmqsource)
 
     tb.start()
 

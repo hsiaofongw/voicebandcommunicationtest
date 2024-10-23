@@ -72,7 +72,7 @@ blocks:
     affinity: ''
     alias: ''
     append: 'False'
-    bits_per_sample1: FORMAT_PCM_16
+    bits_per_sample1: FORMAT_FLOAT
     bits_per_sample2: FORMAT_PCM_16
     bits_per_sample3: FORMAT_VORBIS
     bits_per_sample4: FORMAT_PCM_16
