@@ -73,13 +73,14 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
         self.access_code = access_code = "11100001010110101110100010010011"
         self.samp_rate = samp_rate = 32000
         self.format_used = format_used = digital.header_format_counter(access_code,0,8)
+        self.format_default = format_default = digital.header_format_default(access_code,0)
 
         ##################################################
         # Blocks
         ##################################################
 
         self.qtgui_time_sink_x_0 = qtgui.time_sink_f(
-            21, #size
+            23, #size
             samp_rate, #samp_rate
             "", #name
             1, #number of inputs
@@ -130,6 +131,7 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
         self.pdu_pdu_to_tagged_stream_0 = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         self.pdu_pdu_lambda_0 = pdu.pdu_lambda(lambda x: pmt.dict_add(x, pmt.string_to_symbol("frame_len"), pmt.from_long(8*pmt.to_long(pmt.dict_ref(x,pmt.string_to_symbol("payload symbols"),pmt.from_long(0))))), "RAW", pmt.intern("key"))
         self.digital_protocol_parser_b_0 = digital.protocol_parser_b(format_used)
+        self.digital_protocol_formatter_bb_1 = digital.protocol_formatter_bb(format_default, "packet_len")
         self.digital_protocol_formatter_async_0 = digital.protocol_formatter_async(format_used)
         self.digital_header_payload_demux_0 = digital.header_payload_demux(
             96,
@@ -143,8 +145,18 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
             samp_rate,
             (),
             0)
+        self.digital_crc32_bb_2 = digital.crc32_bb(True, "packet_len", True)
+        self.digital_crc32_bb_1 = digital.crc32_bb(False, "packet_len", True)
+        self.digital_crc32_bb_0 = digital.crc32_bb(True, "frame_len", True)
         self.digital_crc32_async_bb_0 = digital.crc32_async_bb(False)
+        self.digital_correlate_access_code_xx_ts_0 = digital.correlate_access_code_bb_ts(access_code,
+          0, 'packet_len')
+        self.blocks_tagged_stream_mux_2 = blocks.tagged_stream_mux(gr.sizeof_char*1, 'packet_len', 0)
         self.blocks_tagged_stream_mux_0 = blocks.tagged_stream_mux(gr.sizeof_char*1, 'packet_len', 0)
+        self.blocks_tag_gate_0 = blocks.tag_gate(gr.sizeof_char * 1, False)
+        self.blocks_tag_gate_0.set_single_key("")
+        self.blocks_repack_bits_bb_3 = blocks.repack_bits_bb(8, 1, "", False, gr.GR_MSB_FIRST)
+        self.blocks_repack_bits_bb_2 = blocks.repack_bits_bb(1, 8, "packet_len", False, gr.GR_MSB_FIRST)
         self.blocks_repack_bits_bb_1 = blocks.repack_bits_bb(1, 8, "frame_len", False, gr.GR_MSB_FIRST)
         self.blocks_repack_bits_bb_0 = blocks.repack_bits_bb(8, 1, "packet_len", False, gr.GR_MSB_FIRST)
         self.blocks_message_strobe_0 = blocks.message_strobe(pmt.cons(pmt.PMT_NIL, pmt.init_u8vector(6,[0x01,0x02,0x03,0x04,0x00,0x00])), 1000)
@@ -165,12 +177,22 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
         self.msg_connect((self.pdu_pdu_lambda_0, 'pdu'), (self.blocks_message_debug_0, 'print'))
         self.msg_connect((self.pdu_pdu_lambda_0, 'pdu'), (self.digital_header_payload_demux_0, 'header_data'))
         self.connect((self.blocks_char_to_float_0, 0), (self.qtgui_time_sink_x_0, 0))
-        self.connect((self.blocks_repack_bits_bb_0, 0), (self.digital_header_payload_demux_0, 0))
-        self.connect((self.blocks_repack_bits_bb_1, 0), (self.blocks_char_to_float_0, 0))
-        self.connect((self.blocks_tagged_stream_mux_0, 0), (self.blocks_file_sink_0, 0))
-        self.connect((self.blocks_tagged_stream_mux_0, 0), (self.blocks_repack_bits_bb_0, 0))
+        self.connect((self.blocks_repack_bits_bb_0, 0), (self.blocks_tag_gate_0, 0))
+        self.connect((self.blocks_repack_bits_bb_1, 0), (self.digital_crc32_bb_0, 0))
+        self.connect((self.blocks_repack_bits_bb_2, 0), (self.digital_crc32_bb_2, 0))
+        self.connect((self.blocks_repack_bits_bb_3, 0), (self.digital_header_payload_demux_0, 0))
+        self.connect((self.blocks_tag_gate_0, 0), (self.digital_correlate_access_code_xx_ts_0, 0))
+        self.connect((self.blocks_tagged_stream_mux_0, 0), (self.digital_crc32_bb_1, 0))
+        self.connect((self.blocks_tagged_stream_mux_2, 0), (self.blocks_file_sink_0, 0))
+        self.connect((self.blocks_tagged_stream_mux_2, 0), (self.blocks_repack_bits_bb_0, 0))
+        self.connect((self.digital_correlate_access_code_xx_ts_0, 0), (self.blocks_repack_bits_bb_2, 0))
+        self.connect((self.digital_crc32_bb_0, 0), (self.blocks_char_to_float_0, 0))
+        self.connect((self.digital_crc32_bb_1, 0), (self.blocks_tagged_stream_mux_2, 1))
+        self.connect((self.digital_crc32_bb_1, 0), (self.digital_protocol_formatter_bb_1, 0))
+        self.connect((self.digital_crc32_bb_2, 0), (self.blocks_repack_bits_bb_3, 0))
         self.connect((self.digital_header_payload_demux_0, 1), (self.blocks_repack_bits_bb_1, 0))
         self.connect((self.digital_header_payload_demux_0, 0), (self.digital_protocol_parser_b_0, 0))
+        self.connect((self.digital_protocol_formatter_bb_1, 0), (self.blocks_tagged_stream_mux_2, 0))
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.blocks_tagged_stream_mux_0, 0))
         self.connect((self.pdu_pdu_to_tagged_stream_0_0, 0), (self.blocks_tagged_stream_mux_0, 1))
 
@@ -195,6 +217,7 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
 
     def set_access_code(self, access_code):
         self.access_code = access_code
+        self.set_format_default(digital.header_format_default(self.access_code,0))
         self.set_format_used(digital.header_format_counter(self.access_code,0,8))
 
     def get_samp_rate(self):
@@ -209,6 +232,12 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
 
     def set_format_used(self, format_used):
         self.format_used = format_used
+
+    def get_format_default(self):
+        return self.format_default
+
+    def set_format_default(self, format_default):
+        self.format_default = format_default
 
 
 

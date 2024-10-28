@@ -45,6 +45,18 @@ blocks:
     coordinate: [304, 36.0]
     rotation: 0
     state: enabled
+- name: format_default
+  id: variable
+  parameters:
+    comment: ''
+    value: digital.header_format_default(access_code,0)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [712, 28.0]
+    rotation: 0
+    state: enabled
 - name: format_used
   id: variable
   parameters:
@@ -83,7 +95,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [864, 504.0]
+    coordinate: [1400, 664.0]
     rotation: 0
     state: enabled
 - name: blocks_file_sink_0
@@ -101,7 +113,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1344, 300.0]
+    coordinate: [2072, 260.0]
     rotation: 0
     state: enabled
 - name: blocks_message_debug_0
@@ -116,7 +128,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [328, 744.0]
+    coordinate: [592, 704.0]
     rotation: 0
     state: enabled
 - name: blocks_message_strobe_0
@@ -133,7 +145,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [64, 196.0]
+    coordinate: [64, 116.0]
     rotation: 0
     state: enabled
 - name: blocks_repack_bits_bb_0
@@ -153,7 +165,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1344, 196.0]
+    coordinate: [2072, 172.0]
     rotation: 0
     state: enabled
 - name: blocks_repack_bits_bb_1
@@ -173,7 +185,66 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [648, 492.0]
+    coordinate: [1056, 556.0]
+    rotation: 0
+    state: enabled
+- name: blocks_repack_bits_bb_2
+  id: blocks_repack_bits_bb
+  parameters:
+    affinity: ''
+    alias: ''
+    align_output: 'False'
+    comment: ''
+    endianness: gr.GR_MSB_FIRST
+    k: '1'
+    l: '8'
+    len_tag_key: '"packet_len"'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [104, 396.0]
+    rotation: 0
+    state: enabled
+- name: blocks_repack_bits_bb_3
+  id: blocks_repack_bits_bb
+  parameters:
+    affinity: ''
+    alias: ''
+    align_output: 'False'
+    comment: ''
+    endianness: gr.GR_MSB_FIRST
+    k: '8'
+    l: '1'
+    len_tag_key: '""'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [408, 420.0]
+    rotation: 0
+    state: enabled
+- name: blocks_tag_gate_0
+  id: blocks_tag_gate
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    propagate_tags: 'False'
+    single_key: '""'
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2280, 172.0]
     rotation: 0
     state: enabled
 - name: blocks_tagged_stream_mux_0
@@ -196,6 +267,45 @@ blocks:
     coordinate: [1080, 184.0]
     rotation: 0
     state: enabled
+- name: blocks_tagged_stream_mux_2
+  id: blocks_tagged_stream_mux
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    lengthtagname: packet_len
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    ninputs: '2'
+    tag_preserve_head_pos: '0'
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1816, 160.0]
+    rotation: 0
+    state: enabled
+- name: digital_correlate_access_code_xx_ts_0
+  id: digital_correlate_access_code_xx_ts
+  parameters:
+    access_code: access_code
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    tagname: packet_len
+    threshold: '0'
+    type: byte
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [96, 292.0]
+    rotation: 0
+    state: enabled
 - name: digital_crc32_async_bb_0
   id: digital_crc32_async_bb
   parameters:
@@ -209,7 +319,61 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [312, 208.0]
+    coordinate: [312, 184.0]
+    rotation: 0
+    state: enabled
+- name: digital_crc32_bb_0
+  id: digital_crc32_bb
+  parameters:
+    affinity: ''
+    alias: ''
+    check: 'True'
+    comment: ''
+    lengthtagname: '"frame_len"'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    packed: 'True'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1248, 516.0]
+    rotation: 0
+    state: enabled
+- name: digital_crc32_bb_1
+  id: digital_crc32_bb
+  parameters:
+    affinity: ''
+    alias: ''
+    check: 'False'
+    comment: ''
+    lengthtagname: '"packet_len"'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    packed: 'True'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1336, 188.0]
+    rotation: 0
+    state: enabled
+- name: digital_crc32_bb_2
+  id: digital_crc32_bb
+  parameters:
+    affinity: ''
+    alias: ''
+    check: 'True'
+    comment: ''
+    lengthtagname: '"packet_len"'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    packed: 'True'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [200, 492.0]
     rotation: 0
     state: enabled
 - name: digital_header_payload_demux_0
@@ -235,7 +399,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [280, 400.0]
+    coordinate: [680, 400.0]
     rotation: 0
     state: enabled
 - name: digital_protocol_formatter_async_0
@@ -251,7 +415,24 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [504, 184.0]
+    coordinate: [520, 200.0]
+    rotation: 0
+    state: enabled
+- name: digital_protocol_formatter_bb_1
+  id: digital_protocol_formatter_bb
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    format: format_default
+    len_tag_key: '"packet_len"'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1552, 108.0]
     rotation: 0
     state: enabled
 - name: digital_protocol_parser_b_0
@@ -267,7 +448,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [544, 672.0]
+    coordinate: [864, 672.0]
     rotation: 180
     state: enabled
 - name: out
@@ -284,7 +465,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [712, 28.0]
+    coordinate: [896, 16.0]
     rotation: 0
     state: enabled
 - name: pdu_pdu_lambda_0
@@ -303,7 +484,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [264, 640.0]
+    coordinate: [576, 632.0]
     rotation: 180
     state: enabled
 - name: pdu_pdu_to_tagged_stream_0
@@ -395,7 +576,7 @@ blocks:
     marker9: '-1'
     name: '""'
     nconnections: '1'
-    size: '21'
+    size: '23'
     srate: samp_rate
     stemplot: 'False'
     style1: '1'
@@ -434,7 +615,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [984, 556.0]
+    coordinate: [1560, 660.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0
@@ -447,7 +628,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1560, 208.0]
+    coordinate: [2480, 184.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0
@@ -460,28 +641,38 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [72, 344.0]
+    coordinate: [24, 224.0]
     rotation: 0
     state: enabled
 
 connections:
 - [blocks_char_to_float_0, '0', qtgui_time_sink_x_0, '0']
 - [blocks_message_strobe_0, strobe, digital_crc32_async_bb_0, in]
-- [blocks_repack_bits_bb_0, '0', virtual_sink_0, '0']
-- [blocks_repack_bits_bb_1, '0', blocks_char_to_float_0, '0']
-- [blocks_tagged_stream_mux_0, '0', blocks_file_sink_0, '0']
-- [blocks_tagged_stream_mux_0, '0', blocks_repack_bits_bb_0, '0']
+- [blocks_repack_bits_bb_0, '0', blocks_tag_gate_0, '0']
+- [blocks_repack_bits_bb_1, '0', digital_crc32_bb_0, '0']
+- [blocks_repack_bits_bb_2, '0', digital_crc32_bb_2, '0']
+- [blocks_repack_bits_bb_3, '0', digital_header_payload_demux_0, '0']
+- [blocks_tag_gate_0, '0', virtual_sink_0, '0']
+- [blocks_tagged_stream_mux_0, '0', digital_crc32_bb_1, '0']
+- [blocks_tagged_stream_mux_2, '0', blocks_file_sink_0, '0']
+- [blocks_tagged_stream_mux_2, '0', blocks_repack_bits_bb_0, '0']
+- [digital_correlate_access_code_xx_ts_0, '0', blocks_repack_bits_bb_2, '0']
 - [digital_crc32_async_bb_0, out, digital_protocol_formatter_async_0, in]
+- [digital_crc32_bb_0, '0', blocks_char_to_float_0, '0']
+- [digital_crc32_bb_1, '0', blocks_tagged_stream_mux_2, '1']
+- [digital_crc32_bb_1, '0', digital_protocol_formatter_bb_1, '0']
+- [digital_crc32_bb_2, '0', blocks_repack_bits_bb_3, '0']
 - [digital_header_payload_demux_0, '0', digital_protocol_parser_b_0, '0']
 - [digital_header_payload_demux_0, '1', blocks_repack_bits_bb_1, '0']
 - [digital_protocol_formatter_async_0, header, pdu_pdu_to_tagged_stream_0, pdus]
 - [digital_protocol_formatter_async_0, payload, pdu_pdu_to_tagged_stream_0_0, pdus]
+- [digital_protocol_formatter_bb_1, '0', blocks_tagged_stream_mux_2, '0']
 - [digital_protocol_parser_b_0, info, pdu_pdu_lambda_0, pdu]
 - [pdu_pdu_lambda_0, pdu, blocks_message_debug_0, print]
 - [pdu_pdu_lambda_0, pdu, digital_header_payload_demux_0, header_data]
 - [pdu_pdu_to_tagged_stream_0, '0', blocks_tagged_stream_mux_0, '0']
 - [pdu_pdu_to_tagged_stream_0_0, '0', blocks_tagged_stream_mux_0, '1']
-- [virtual_source_0, '0', digital_header_payload_demux_0, '0']
+- [virtual_source_0, '0', digital_correlate_access_code_xx_ts_0, '0']
 
 metadata:
   file_format: 1
