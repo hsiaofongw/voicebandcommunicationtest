@@ -42,6 +42,7 @@ class test_packet_mux_and_demux(gr.top_block):
         ##################################################
         self.access_code = access_code = "11100001010110101110100010010011"
         self.samp_rate = samp_rate = 32000
+        self.num_pream_packets = num_pream_packets = 4
         self.format_used = format_used = digital.header_format_counter(access_code,0,8)
         self.format_default = format_default = digital.header_format_default(access_code,0)
 
@@ -52,7 +53,9 @@ class test_packet_mux_and_demux(gr.top_block):
         self.pdu_tagged_stream_to_pdu_0 = pdu.tagged_stream_to_pdu(gr.types.byte_t, 'frame_len')
         self.pdu_pdu_to_tagged_stream_0_0 = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         self.pdu_pdu_to_tagged_stream_0 = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
+        self.pdu_pdu_lambda_1 = pdu.pdu_lambda(lambda x: pmt.cons(pmt.to_pmt({ 'select': True }) if pmt.to_long(pmt.dict_ref(pmt.car(x), pmt.string_to_symbol("counter"), pmt.from_long(0))) >= num_pream_packets else pmt.to_pmt({ 'select': False }), pmt.cdr(x)), "RAW", pmt.intern("key"))
         self.pdu_pdu_lambda_0 = pdu.pdu_lambda(lambda x: pmt.dict_add(x, pmt.string_to_symbol("frame_len"), pmt.from_long(8*pmt.to_long(pmt.dict_ref(x,pmt.string_to_symbol("payload symbols"),pmt.from_long(0))))), "RAW", pmt.intern("key"))
+        self.pdu_pdu_filter_0 = pdu.pdu_filter(pmt.intern("select"), pmt.PMT_T, False)
         self.digital_protocol_parser_b_0 = digital.protocol_parser_b(format_used)
         self.digital_protocol_formatter_bb_1 = digital.protocol_formatter_bb(format_default, "packet_len")
         self.digital_protocol_formatter_async_0 = digital.protocol_formatter_async(format_used)
@@ -97,9 +100,11 @@ class test_packet_mux_and_demux(gr.top_block):
         self.msg_connect((self.digital_protocol_formatter_async_0, 'header'), (self.pdu_pdu_to_tagged_stream_0, 'pdus'))
         self.msg_connect((self.digital_protocol_formatter_async_0, 'payload'), (self.pdu_pdu_to_tagged_stream_0_0, 'pdus'))
         self.msg_connect((self.digital_protocol_parser_b_0, 'info'), (self.pdu_pdu_lambda_0, 'pdu'))
+        self.msg_connect((self.pdu_pdu_filter_0, 'pdus'), (self.blocks_message_debug_1, 'print'))
         self.msg_connect((self.pdu_pdu_lambda_0, 'pdu'), (self.blocks_message_debug_0, 'print'))
         self.msg_connect((self.pdu_pdu_lambda_0, 'pdu'), (self.digital_header_payload_demux_0, 'header_data'))
-        self.msg_connect((self.pdu_tagged_stream_to_pdu_0, 'pdus'), (self.blocks_message_debug_1, 'print'))
+        self.msg_connect((self.pdu_pdu_lambda_1, 'pdu'), (self.pdu_pdu_filter_0, 'pdus'))
+        self.msg_connect((self.pdu_tagged_stream_to_pdu_0, 'pdus'), (self.pdu_pdu_lambda_1, 'pdu'))
         self.connect((self.blocks_repack_bits_bb_0, 0), (self.blocks_tag_gate_0, 0))
         self.connect((self.blocks_repack_bits_bb_1, 0), (self.digital_crc32_bb_0, 0))
         self.connect((self.blocks_repack_bits_bb_2, 0), (self.digital_crc32_bb_2, 0))
@@ -140,6 +145,13 @@ class test_packet_mux_and_demux(gr.top_block):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
+
+    def get_num_pream_packets(self):
+        return self.num_pream_packets
+
+    def set_num_pream_packets(self, num_pream_packets):
+        self.num_pream_packets = num_pream_packets
+        self.pdu_pdu_lambda_1.set_fn(lambda x: pmt.cons(pmt.to_pmt({ 'select': True }) if pmt.to_long(pmt.dict_ref(pmt.car(x), pmt.string_to_symbol("counter"), pmt.from_long(0))) >= self.num_pream_packets else pmt.to_pmt({ 'select': False }), pmt.cdr(x)))
 
     def get_format_used(self):
         return self.format_used
