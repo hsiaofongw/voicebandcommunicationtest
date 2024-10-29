@@ -16,7 +16,9 @@ sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnura
 
 from custom_iq_complex_to_passband_real import custom_iq_complex_to_passband_real  # grc-generated hier_block
 from custom_packet_formatter import custom_packet_formatter  # grc-generated hier_block
+from custom_packet_parser import custom_packet_parser  # grc-generated hier_block
 from custom_passband_real_to_iq_complex import custom_passband_real_to_iq_complex  # grc-generated hier_block
+from custom_remove_preamble import custom_remove_preamble  # grc-generated hier_block
 from garbage_padded_stream import garbage_padded_stream  # grc-generated hier_block
 from gnuradio import blocks
 import pmt
@@ -33,8 +35,6 @@ from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import gr, pdu
 from gnuradio import network
-from gnuradio import pdu
-import pmt, numpy as np
 import sip
 
 
@@ -187,37 +187,16 @@ class test_transceive(gr.top_block, Qt.QWidget):
 
         self._qtgui_const_sink_x_0_win = sip.wrapinstance(self.qtgui_const_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_const_sink_x_0_win)
-        self.pdu_tagged_stream_to_pdu_0 = pdu.tagged_stream_to_pdu(gr.types.byte_t, 'frame_len')
         self.pdu_pdu_to_tagged_stream_0 = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
-        self.pdu_pdu_lambda_1 = pdu.pdu_lambda(lambda x: pmt.cons(pmt.to_pmt({ 'select': True }) if pmt.to_long(pmt.dict_ref(pmt.car(x), pmt.string_to_symbol("counter"), pmt.from_long(0))) >= num_pream_packets else pmt.to_pmt({ 'select': False }), pmt.cdr(x)), "RAW", pmt.intern("key"))
-        self.pdu_pdu_lambda_0 = pdu.pdu_lambda(lambda x: pmt.dict_add(x, pmt.string_to_symbol("frame_len"), pmt.from_long(8*pmt.to_long(pmt.dict_ref(x,pmt.string_to_symbol("payload symbols"),pmt.from_long(0))))), "RAW", pmt.intern("key"))
-        self.pdu_pdu_filter_0 = pdu.pdu_filter(pmt.intern("select"), pmt.PMT_T, False)
         self.network_tcp_sink_0 = network.tcp_sink(gr.sizeof_char, 1, dest_host, int(dest_port),1)
         self.garbage_padded_stream_0 = garbage_padded_stream(
             garbage_preamble_length_n_bytes=garbage_preamble_length_n_bytes,
         )
-        self.digital_protocol_parser_b_0 = digital.protocol_parser_b(format_used)
         self.digital_pfb_clock_sync_xxx_0 = digital.pfb_clock_sync_ccf(sps, (2*3.14/100), variable_rrc_filter_taps_0, filtersize, 0, 1.5, 2)
         self.digital_map_bb_0 = digital.map_bb([0,1,3,2])
         self.digital_linear_equalizer_0 = digital.linear_equalizer(15, 2, variable_adaptive_algorithm_0, True, [ ], 'corr_est')
-        self.digital_header_payload_demux_0 = digital.header_payload_demux(
-            96,
-            1,
-            0,
-            "frame_len",
-            "packet_len",
-            False,
-            gr.sizeof_char,
-            "",
-            samp_rate,
-            (),
-            0)
         self.digital_diff_decoder_bb_0 = digital.diff_decoder_bb(4, digital.DIFF_DIFFERENTIAL)
-        self.digital_crc32_bb_2 = digital.crc32_bb(True, "packet_len", True)
-        self.digital_crc32_bb_0 = digital.crc32_bb(True, "frame_len", True)
         self.digital_costas_loop_cc_0 = digital.costas_loop_cc((2*3.14/100), 4, False)
-        self.digital_correlate_access_code_xx_ts_0 = digital.correlate_access_code_bb_ts(access_code,
-          0, 'packet_len')
         self.digital_constellation_modulator_0 = digital.generic_mod(
             constellation=constellationobj,
             differential=True,
@@ -228,9 +207,15 @@ class test_transceive(gr.top_block, Qt.QWidget):
             log=False,
             truncate=False)
         self.digital_constellation_decoder_cb_0 = digital.constellation_decoder_cb(constellationobj)
+        self.custom_remove_preamble_0 = custom_remove_preamble(
+            num_pream_packets=num_pream_packets,
+        )
         self.custom_passband_real_to_iq_complex_0 = custom_passband_real_to_iq_complex(
             passband_fc=passband_fc,
             samp_rate=samp_rate,
+        )
+        self.custom_packet_parser_0 = custom_packet_parser(
+            samp_rate=48000,
         )
         self.custom_packet_formatter_0 = custom_packet_formatter(
             access_code=access_code,
@@ -262,11 +247,8 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.blocks_tag_gate_1.set_single_key("")
         self.blocks_tag_gate_0 = blocks.tag_gate(gr.sizeof_char * 1, False)
         self.blocks_tag_gate_0.set_single_key("")
-        self.blocks_repack_bits_bb_3 = blocks.repack_bits_bb(8, 1, "", False, gr.GR_MSB_FIRST)
-        self.blocks_repack_bits_bb_2 = blocks.repack_bits_bb(1, 8, "packet_len", False, gr.GR_MSB_FIRST)
-        self.blocks_repack_bits_bb_1 = blocks.repack_bits_bb(1, 8, "frame_len", False, gr.GR_MSB_FIRST)
+        self.blocks_message_debug_1_0 = blocks.message_debug(True, gr.log_levels.info)
         self.blocks_message_debug_1 = blocks.message_debug(True, gr.log_levels.info)
-        self.blocks_message_debug_0 = blocks.message_debug(False, gr.log_levels.debug)
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_char*1, in_file, False, 0, 0)
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
 
@@ -274,37 +256,26 @@ class test_transceive(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
-        self.msg_connect((self.digital_protocol_parser_b_0, 'info'), (self.pdu_pdu_lambda_0, 'pdu'))
-        self.msg_connect((self.pdu_pdu_filter_0, 'pdus'), (self.blocks_message_debug_1, 'print'))
-        self.msg_connect((self.pdu_pdu_filter_0, 'pdus'), (self.pdu_pdu_to_tagged_stream_0, 'pdus'))
-        self.msg_connect((self.pdu_pdu_lambda_0, 'pdu'), (self.blocks_message_debug_0, 'print'))
-        self.msg_connect((self.pdu_pdu_lambda_0, 'pdu'), (self.digital_header_payload_demux_0, 'header_data'))
-        self.msg_connect((self.pdu_pdu_lambda_1, 'pdu'), (self.pdu_pdu_filter_0, 'pdus'))
-        self.msg_connect((self.pdu_tagged_stream_to_pdu_0, 'pdus'), (self.pdu_pdu_lambda_1, 'pdu'))
+        self.msg_connect((self.custom_packet_parser_0, 'header_data'), (self.blocks_message_debug_1_0, 'print'))
+        self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.blocks_message_debug_1, 'print'))
+        self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.pdu_pdu_to_tagged_stream_0, 'pdus'))
         self.connect((self.blocks_file_source_0, 0), (self.garbage_padded_stream_0, 0))
-        self.connect((self.blocks_repack_bits_bb_1, 0), (self.digital_crc32_bb_0, 0))
-        self.connect((self.blocks_repack_bits_bb_2, 0), (self.digital_crc32_bb_2, 0))
-        self.connect((self.blocks_repack_bits_bb_3, 0), (self.digital_header_payload_demux_0, 0))
         self.connect((self.blocks_tag_gate_0, 0), (self.digital_constellation_modulator_0, 0))
         self.connect((self.blocks_tag_gate_1, 0), (self.custom_passband_real_to_iq_complex_0, 0))
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_tag_gate_1, 0))
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_wavfile_sink_0, 0))
-        self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.digital_correlate_access_code_xx_ts_0, 0))
+        self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.custom_packet_parser_0, 0))
         self.connect((self.channels_channel_model_0, 0), (self.digital_pfb_clock_sync_xxx_0, 0))
         self.connect((self.channels_channel_model_0, 0), (self.qtgui_freq_sink_x_0, 0))
         self.connect((self.custom_iq_complex_to_passband_real_0, 0), (self.blocks_throttle2_1, 0))
         self.connect((self.custom_packet_formatter_0, 0), (self.blocks_tag_gate_0, 0))
+        self.connect((self.custom_packet_parser_0, 0), (self.custom_remove_preamble_0, 0))
         self.connect((self.custom_passband_real_to_iq_complex_0, 0), (self.channels_channel_model_0, 0))
         self.connect((self.digital_constellation_decoder_cb_0, 0), (self.digital_diff_decoder_bb_0, 0))
         self.connect((self.digital_constellation_modulator_0, 0), (self.custom_iq_complex_to_passband_real_0, 0))
-        self.connect((self.digital_correlate_access_code_xx_ts_0, 0), (self.blocks_repack_bits_bb_2, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.digital_constellation_decoder_cb_0, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.qtgui_const_sink_x_0, 0))
-        self.connect((self.digital_crc32_bb_0, 0), (self.pdu_tagged_stream_to_pdu_0, 0))
-        self.connect((self.digital_crc32_bb_2, 0), (self.blocks_repack_bits_bb_3, 0))
         self.connect((self.digital_diff_decoder_bb_0, 0), (self.digital_map_bb_0, 0))
-        self.connect((self.digital_header_payload_demux_0, 1), (self.blocks_repack_bits_bb_1, 0))
-        self.connect((self.digital_header_payload_demux_0, 0), (self.digital_protocol_parser_b_0, 0))
         self.connect((self.digital_linear_equalizer_0, 0), (self.digital_costas_loop_cc_0, 0))
         self.connect((self.digital_map_bb_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
         self.connect((self.digital_pfb_clock_sync_xxx_0, 0), (self.digital_linear_equalizer_0, 0))
@@ -358,7 +329,7 @@ class test_transceive(gr.top_block, Qt.QWidget):
     def set_num_pream_packets(self, num_pream_packets):
         self.num_pream_packets = num_pream_packets
         self.set_garbage_preamble_length_n_bytes(self.packet_size*self.num_pream_packets)
-        self.pdu_pdu_lambda_1.set_fn(lambda x: pmt.cons(pmt.to_pmt({ 'select': True }) if pmt.to_long(pmt.dict_ref(pmt.car(x), pmt.string_to_symbol("counter"), pmt.from_long(0))) >= self.num_pream_packets else pmt.to_pmt({ 'select': False }), pmt.cdr(x)))
+        self.custom_remove_preamble_0.set_num_pream_packets(self.num_pream_packets)
 
     def get_out(self):
         return self.out

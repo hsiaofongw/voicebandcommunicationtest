@@ -1,0 +1,155 @@
+options:
+  parameters:
+    author: ''
+    catch_exceptions: 'True'
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: ''
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: hb
+    hier_block_src_path: '.:'
+    id: custom_remove_preamble
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: Custom remove preamble
+    window_size: (1000,1000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: num_pream_packets
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Number of preamble garbage packets
+    short_id: ''
+    type: intx
+    value: '10'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [248, 24.0]
+    rotation: 0
+    state: enabled
+- name: pad_sink_0
+  id: pad_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    label: out
+    num_streams: '1'
+    optional: 'False'
+    type: message
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [960, 216.0]
+    rotation: 0
+    state: enabled
+- name: pad_source_0
+  id: pad_source
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    label: in
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_streams: '1'
+    optional: 'False'
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [80, 216.0]
+    rotation: 0
+    state: enabled
+- name: pdu_pdu_filter_0
+  id: pdu_pdu_filter
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    invert: 'False'
+    k: pmt.intern("select")
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    v: pmt.PMT_T
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [760, 196.0]
+    rotation: 0
+    state: enabled
+- name: pdu_pdu_lambda_1
+  id: pdu_pdu_lambda
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    fn: 'lambda x: pmt.cons(pmt.to_pmt({ ''select'': True }) if pmt.to_long(pmt.dict_ref(pmt.car(x),
+      pmt.string_to_symbol("counter"), pmt.from_long(0))) >= num_pream_packets else
+      pmt.to_pmt({ ''select'': False }), pmt.cdr(x))'
+    key: pmt.intern("key")
+    maxoutbuf: '0'
+    metadict: Raw Message
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [496, 216.0]
+    rotation: 0
+    state: enabled
+- name: pdu_tagged_stream_to_pdu_0
+  id: pdu_tagged_stream_to_pdu
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    tag: frame_len
+    type: byte
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [248, 216.0]
+    rotation: 0
+    state: enabled
+
+connections:
+- [pad_source_0, '0', pdu_tagged_stream_to_pdu_0, '0']
+- [pdu_pdu_filter_0, pdus, pad_sink_0, in]
+- [pdu_pdu_lambda_1, pdu, pdu_pdu_filter_0, pdus]
+- [pdu_tagged_stream_to_pdu_0, pdus, pdu_pdu_lambda_1, pdu]
+
+metadata:
+  file_format: 1
+  grc_version: 3.10.9.2
