@@ -42,7 +42,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [504, 92.0]
+    coordinate: [480, 44.0]
     rotation: 0
     state: enabled
 - name: constellationobj
@@ -74,7 +74,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [704, 76.0]
+    coordinate: [672, 52.0]
     rotation: 0
     state: enabled
 - name: garbage_preamble_length_n_bytes
@@ -123,29 +123,6 @@ blocks:
     coordinate: [1816, 148.0]
     rotation: 0
     state: enabled
-- name: analog_sig_source_x_0
-  id: analog_sig_source_x
-  parameters:
-    affinity: ''
-    alias: ''
-    amp: '1'
-    comment: ''
-    freq: passband_fc
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    offset: '0'
-    phase: '0'
-    samp_rate: samp_rate
-    showports: 'False'
-    type: complex
-    waveform: analog.GR_COS_WAVE
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [352, 628.0]
-    rotation: 0
-    state: enabled
 - name: analog_sig_source_x_0_0
   id: analog_sig_source_x
   parameters:
@@ -169,22 +146,6 @@ blocks:
     coordinate: [24, 908.0]
     rotation: 0
     state: enabled
-- name: blocks_complex_to_float_0
-  id: blocks_complex_to_float
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [576, 656.0]
-    rotation: 0
-    state: enabled
 - name: blocks_complex_to_float_0_0
   id: blocks_complex_to_float
   parameters:
@@ -199,22 +160,6 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [240, 1040.0]
-    rotation: 0
-    state: enabled
-- name: blocks_complex_to_float_1
-  id: blocks_complex_to_float
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [560, 776.0]
     rotation: 0
     state: enabled
 - name: blocks_file_source_0
@@ -321,60 +266,6 @@ blocks:
     coordinate: [576, 1144.0]
     rotation: 0
     state: enabled
-- name: blocks_multiply_const_vxx_1
-  id: blocks_multiply_const_vxx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    const: 2*txgain
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1072, 744.0]
-    rotation: 0
-    state: enabled
-- name: blocks_multiply_xx_0_0
-  id: blocks_multiply_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_inputs: '2'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [816, 656.0]
-    rotation: 0
-    state: enabled
-- name: blocks_multiply_xx_0_0_0
-  id: blocks_multiply_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_inputs: '2'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [800, 776.0]
-    rotation: 0
-    state: enabled
 - name: blocks_multiply_xx_0_0_0_0
   id: blocks_multiply_xx
   parameters:
@@ -471,24 +362,6 @@ blocks:
     coordinate: [1024, 1356.0]
     rotation: 0
     state: enabled
-- name: blocks_sub_xx_0_0
-  id: blocks_sub_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_inputs: '2'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [944, 680.0]
-    rotation: 0
-    state: enabled
 - name: blocks_tag_gate_0
   id: blocks_tag_gate
   parameters:
@@ -524,7 +397,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1640, 732.0]
+    coordinate: [1512, 612.0]
     rotation: 0
     state: enabled
 - name: blocks_throttle2_1
@@ -545,7 +418,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1264, 612.0]
+    coordinate: [872, 564.0]
     rotation: 0
     state: enabled
 - name: blocks_unpack_k_bits_bb_0
@@ -583,7 +456,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1464, 584.0]
+    coordinate: [1112, 488.0]
     rotation: 0
     state: enabled
 - name: channels_channel_model_0
@@ -605,6 +478,24 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [1184, 1036.0]
+    rotation: 0
+    state: enabled
+- name: custom_iq_complex_to_passband_real_0
+  id: custom_iq_complex_to_passband_real
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    passband_fc: passband_fc
+    samp_rate: samp_rate
+    txgain: txgain
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [560, 524.0]
     rotation: 0
     state: enabled
 - name: custom_packet_formatter_0
@@ -693,7 +584,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [288, 792.0]
+    coordinate: [280, 504.0]
     rotation: 0
     state: enabled
 - name: digital_correlate_access_code_xx_ts_0
@@ -902,7 +793,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1120, 88.0]
+    coordinate: [1040, 32.0]
     rotation: 0
     state: enabled
 - name: garbage_padded_stream_0
@@ -1052,7 +943,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [896, 16.0]
+    coordinate: [872, 24.0]
     rotation: 0
     state: enabled
 - name: packet_size
@@ -1384,7 +1275,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1296, 112.0]
+    coordinate: [1256, 112.0]
     rotation: 0
     state: enabled
 - name: txgain
@@ -1396,12 +1287,12 @@ blocks:
     label: Tx Gain
     short_id: ''
     type: eng_float
-    value: '1'
+    value: '2'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1488, 128.0]
+    coordinate: [1448, 160.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0
@@ -1453,7 +1344,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1256, 744.0]
+    coordinate: [1128, 632.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_2
@@ -1505,7 +1396,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1832, 744.0]
+    coordinate: [1704, 624.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0
@@ -1557,7 +1448,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1448, 744.0]
+    coordinate: [1320, 624.0]
     rotation: 0
     state: enabled
 - name: virtual_source_2
@@ -1570,7 +1461,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [72, 792.0]
+    coordinate: [48, 536.0]
     rotation: 0
     state: enabled
 - name: virtual_source_3
@@ -1631,37 +1522,29 @@ blocks:
     state: enabled
 
 connections:
-- [analog_sig_source_x_0, '0', blocks_complex_to_float_0, '0']
 - [analog_sig_source_x_0_0, '0', blocks_complex_to_float_0_0, '0']
-- [blocks_complex_to_float_0, '0', blocks_multiply_xx_0_0, '0']
-- [blocks_complex_to_float_0, '1', blocks_multiply_xx_0_0_0, '0']
 - [blocks_complex_to_float_0_0, '0', blocks_multiply_xx_0_1, '0']
 - [blocks_complex_to_float_0_0, '1', blocks_multiply_xx_0_0_0_0, '0']
-- [blocks_complex_to_float_1, '0', blocks_multiply_xx_0_0, '1']
-- [blocks_complex_to_float_1, '1', blocks_multiply_xx_0_0_0, '1']
 - [blocks_file_source_0, '0', garbage_padded_stream_0, '0']
 - [blocks_float_to_complex_0, '0', channels_channel_model_0, '0']
 - [blocks_multiply_const_vxx_0, '0', low_pass_filter_0, '0']
 - [blocks_multiply_const_vxx_0_0, '0', low_pass_filter_0_0, '0']
-- [blocks_multiply_const_vxx_1, '0', blocks_throttle2_1, '0']
-- [blocks_multiply_const_vxx_1, '0', virtual_sink_1_0, '0']
-- [blocks_multiply_xx_0_0, '0', blocks_sub_xx_0_0, '0']
-- [blocks_multiply_xx_0_0_0, '0', blocks_sub_xx_0_0, '1']
 - [blocks_multiply_xx_0_0_0_0, '0', blocks_multiply_const_vxx_0_0, '0']
 - [blocks_multiply_xx_0_1, '0', blocks_multiply_const_vxx_0, '0']
 - [blocks_repack_bits_bb_1, '0', digital_crc32_bb_0, '0']
 - [blocks_repack_bits_bb_2, '0', digital_crc32_bb_2, '0']
 - [blocks_repack_bits_bb_3, '0', virtual_sink_2, '0']
-- [blocks_sub_xx_0_0, '0', blocks_multiply_const_vxx_1, '0']
 - [blocks_tag_gate_0, '0', virtual_sink_0, '0']
 - [blocks_tag_gate_1, '0', virtual_sink_4, '0']
 - [blocks_throttle2_1, '0', blocks_wavfile_sink_0, '0']
+- [blocks_throttle2_1, '0', virtual_sink_1_0, '0']
 - [blocks_unpack_k_bits_bb_0, '0', virtual_sink_0_0, '0']
 - [channels_channel_model_0, '0', digital_pfb_clock_sync_xxx_0, '0']
 - [channels_channel_model_0, '0', qtgui_freq_sink_x_0, '0']
+- [custom_iq_complex_to_passband_real_0, '0', blocks_throttle2_1, '0']
 - [custom_packet_formatter_0, '0', blocks_tag_gate_0, '0']
 - [digital_constellation_decoder_cb_0, '0', digital_diff_decoder_bb_0, '0']
-- [digital_constellation_modulator_0, '0', blocks_complex_to_float_1, '0']
+- [digital_constellation_modulator_0, '0', custom_iq_complex_to_passband_real_0, '0']
 - [digital_correlate_access_code_xx_ts_0, '0', blocks_repack_bits_bb_2, '0']
 - [digital_costas_loop_cc_0, '0', qtgui_const_sink_x_0, '0']
 - [digital_costas_loop_cc_0, '0', virtual_sink_3_0, '0']
