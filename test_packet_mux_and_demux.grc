@@ -69,11 +69,23 @@ blocks:
     coordinate: [504, 28.0]
     rotation: 0
     state: enabled
+- name: garbage_preamble_length_n_bytes
+  id: variable
+  parameters:
+    comment: ''
+    value: packet_size*10
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1248, 20.0]
+    rotation: 0
+    state: enabled
 - name: num_pream_packets
   id: variable
   parameters:
     comment: ''
-    value: '4'
+    value: int(garbage_preamble_length_n_bytes/packet_size)
   states:
     bus_sink: false
     bus_source: false
@@ -134,7 +146,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    en_uvec: 'True'
+    en_uvec: 'False'
     log_level: debug
   states:
     bus_sink: false
@@ -156,6 +168,21 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [1872, 760.0]
+    rotation: 0
+    state: enabled
+- name: blocks_message_debug_2
+  id: blocks_message_debug
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    en_uvec: 'True'
+    log_level: info
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [832, 296.0]
     rotation: 0
     state: enabled
 - name: blocks_message_strobe_0
@@ -495,6 +522,23 @@ blocks:
     coordinate: [896, 16.0]
     rotation: 0
     state: enabled
+- name: packet_size
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Packet Size
+    short_id: ''
+    type: intx
+    value: '64'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1448, 20.0]
+    rotation: 0
+    state: enabled
 - name: pdu_pdu_filter_0
   id: pdu_pdu_filter
   parameters:
@@ -747,6 +791,7 @@ connections:
 - [digital_crc32_bb_2, '0', blocks_repack_bits_bb_3, '0']
 - [digital_header_payload_demux_0, '0', digital_protocol_parser_b_0, '0']
 - [digital_header_payload_demux_0, '1', blocks_repack_bits_bb_1, '0']
+- [digital_protocol_formatter_async_0, header, blocks_message_debug_2, print]
 - [digital_protocol_formatter_async_0, header, pdu_pdu_to_tagged_stream_0, pdus]
 - [digital_protocol_formatter_async_0, payload, pdu_pdu_to_tagged_stream_0_0, pdus]
 - [digital_protocol_formatter_bb_1, '0', blocks_tagged_stream_mux_2, '0']
