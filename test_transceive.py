@@ -16,15 +16,14 @@ sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnura
 
 from custom_iq_complex_to_passband_real import custom_iq_complex_to_passband_real  # grc-generated hier_block
 from custom_packet_formatter import custom_packet_formatter  # grc-generated hier_block
+from custom_passband_real_to_iq_complex import custom_passband_real_to_iq_complex  # grc-generated hier_block
 from garbage_padded_stream import garbage_padded_stream  # grc-generated hier_block
-from gnuradio import analog
 from gnuradio import blocks
 import pmt
 from gnuradio import blocks, gr
 from gnuradio import channels
 from gnuradio.filter import firdes
 from gnuradio import digital
-from gnuradio import filter
 from gnuradio import gr
 from gnuradio.fft import window
 import signal
@@ -194,24 +193,6 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.pdu_pdu_lambda_0 = pdu.pdu_lambda(lambda x: pmt.dict_add(x, pmt.string_to_symbol("frame_len"), pmt.from_long(8*pmt.to_long(pmt.dict_ref(x,pmt.string_to_symbol("payload symbols"),pmt.from_long(0))))), "RAW", pmt.intern("key"))
         self.pdu_pdu_filter_0 = pdu.pdu_filter(pmt.intern("select"), pmt.PMT_T, False)
         self.network_tcp_sink_0 = network.tcp_sink(gr.sizeof_char, 1, dest_host, int(dest_port),1)
-        self.low_pass_filter_0_0 = filter.fir_filter_fff(
-            1,
-            firdes.low_pass(
-                1,
-                samp_rate,
-                passband_fc,
-                1e3,
-                window.WIN_HAMMING,
-                6.76))
-        self.low_pass_filter_0 = filter.fir_filter_fff(
-            1,
-            firdes.low_pass(
-                1,
-                samp_rate,
-                passband_fc,
-                1e3,
-                window.WIN_HAMMING,
-                6.76))
         self.garbage_padded_stream_0 = garbage_padded_stream(
             garbage_preamble_length_n_bytes=garbage_preamble_length_n_bytes,
         )
@@ -247,6 +228,10 @@ class test_transceive(gr.top_block, Qt.QWidget):
             log=False,
             truncate=False)
         self.digital_constellation_decoder_cb_0 = digital.constellation_decoder_cb(constellationobj)
+        self.custom_passband_real_to_iq_complex_0 = custom_passband_real_to_iq_complex(
+            passband_fc=passband_fc,
+            samp_rate=samp_rate,
+        )
         self.custom_packet_formatter_0 = custom_packet_formatter(
             access_code=access_code,
             packet_size=packet_size,
@@ -280,17 +265,10 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.blocks_repack_bits_bb_3 = blocks.repack_bits_bb(8, 1, "", False, gr.GR_MSB_FIRST)
         self.blocks_repack_bits_bb_2 = blocks.repack_bits_bb(1, 8, "packet_len", False, gr.GR_MSB_FIRST)
         self.blocks_repack_bits_bb_1 = blocks.repack_bits_bb(1, 8, "frame_len", False, gr.GR_MSB_FIRST)
-        self.blocks_multiply_xx_0_1 = blocks.multiply_vff(1)
-        self.blocks_multiply_xx_0_0_0_0 = blocks.multiply_vff(1)
-        self.blocks_multiply_const_vxx_0_0 = blocks.multiply_const_ff((-2))
-        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(2)
         self.blocks_message_debug_1 = blocks.message_debug(True, gr.log_levels.info)
         self.blocks_message_debug_0 = blocks.message_debug(False, gr.log_levels.debug)
-        self.blocks_float_to_complex_0 = blocks.float_to_complex(1)
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_char*1, in_file, False, 0, 0)
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
-        self.blocks_complex_to_float_0_0 = blocks.complex_to_float(1)
-        self.analog_sig_source_x_0_0 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, passband_fc, 1, 0, 0)
 
 
         ##################################################
@@ -303,21 +281,12 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.msg_connect((self.pdu_pdu_lambda_0, 'pdu'), (self.digital_header_payload_demux_0, 'header_data'))
         self.msg_connect((self.pdu_pdu_lambda_1, 'pdu'), (self.pdu_pdu_filter_0, 'pdus'))
         self.msg_connect((self.pdu_tagged_stream_to_pdu_0, 'pdus'), (self.pdu_pdu_lambda_1, 'pdu'))
-        self.connect((self.analog_sig_source_x_0_0, 0), (self.blocks_complex_to_float_0_0, 0))
-        self.connect((self.blocks_complex_to_float_0_0, 1), (self.blocks_multiply_xx_0_0_0_0, 0))
-        self.connect((self.blocks_complex_to_float_0_0, 0), (self.blocks_multiply_xx_0_1, 0))
         self.connect((self.blocks_file_source_0, 0), (self.garbage_padded_stream_0, 0))
-        self.connect((self.blocks_float_to_complex_0, 0), (self.channels_channel_model_0, 0))
-        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.low_pass_filter_0, 0))
-        self.connect((self.blocks_multiply_const_vxx_0_0, 0), (self.low_pass_filter_0_0, 0))
-        self.connect((self.blocks_multiply_xx_0_0_0_0, 0), (self.blocks_multiply_const_vxx_0_0, 0))
-        self.connect((self.blocks_multiply_xx_0_1, 0), (self.blocks_multiply_const_vxx_0, 0))
         self.connect((self.blocks_repack_bits_bb_1, 0), (self.digital_crc32_bb_0, 0))
         self.connect((self.blocks_repack_bits_bb_2, 0), (self.digital_crc32_bb_2, 0))
         self.connect((self.blocks_repack_bits_bb_3, 0), (self.digital_header_payload_demux_0, 0))
         self.connect((self.blocks_tag_gate_0, 0), (self.digital_constellation_modulator_0, 0))
-        self.connect((self.blocks_tag_gate_1, 0), (self.blocks_multiply_xx_0_0_0_0, 1))
-        self.connect((self.blocks_tag_gate_1, 0), (self.blocks_multiply_xx_0_1, 1))
+        self.connect((self.blocks_tag_gate_1, 0), (self.custom_passband_real_to_iq_complex_0, 0))
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_tag_gate_1, 0))
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_wavfile_sink_0, 0))
         self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.digital_correlate_access_code_xx_ts_0, 0))
@@ -325,6 +294,7 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.connect((self.channels_channel_model_0, 0), (self.qtgui_freq_sink_x_0, 0))
         self.connect((self.custom_iq_complex_to_passband_real_0, 0), (self.blocks_throttle2_1, 0))
         self.connect((self.custom_packet_formatter_0, 0), (self.blocks_tag_gate_0, 0))
+        self.connect((self.custom_passband_real_to_iq_complex_0, 0), (self.channels_channel_model_0, 0))
         self.connect((self.digital_constellation_decoder_cb_0, 0), (self.digital_diff_decoder_bb_0, 0))
         self.connect((self.digital_constellation_modulator_0, 0), (self.custom_iq_complex_to_passband_real_0, 0))
         self.connect((self.digital_correlate_access_code_xx_ts_0, 0), (self.blocks_repack_bits_bb_2, 0))
@@ -339,8 +309,6 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.connect((self.digital_map_bb_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
         self.connect((self.digital_pfb_clock_sync_xxx_0, 0), (self.digital_linear_equalizer_0, 0))
         self.connect((self.garbage_padded_stream_0, 0), (self.custom_packet_formatter_0, 0))
-        self.connect((self.low_pass_filter_0, 0), (self.blocks_float_to_complex_0, 0))
-        self.connect((self.low_pass_filter_0_0, 0), (self.blocks_float_to_complex_0, 1))
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.network_tcp_sink_0, 0))
 
 
@@ -411,10 +379,8 @@ class test_transceive(gr.top_block, Qt.QWidget):
 
     def set_passband_fc(self, passband_fc):
         self.passband_fc = passband_fc
-        self.analog_sig_source_x_0_0.set_frequency(self.passband_fc)
         self.custom_iq_complex_to_passband_real_0.set_passband_fc(self.passband_fc)
-        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, self.passband_fc, 1e3, window.WIN_HAMMING, 6.76))
-        self.low_pass_filter_0_0.set_taps(firdes.low_pass(1, self.samp_rate, self.passband_fc, 1e3, window.WIN_HAMMING, 6.76))
+        self.custom_passband_real_to_iq_complex_0.set_passband_fc(self.passband_fc)
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -422,11 +388,9 @@ class test_transceive(gr.top_block, Qt.QWidget):
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
         self.set_variable_rrc_filter_taps_0(firdes.root_raised_cosine(self.sps+1, self.samp_rate, self.samp_rate/self.sps, 0.35, (11*self.sps)))
-        self.analog_sig_source_x_0_0.set_sampling_freq(self.samp_rate)
         self.blocks_throttle2_1.set_sample_rate(self.samp_rate)
         self.custom_iq_complex_to_passband_real_0.set_samp_rate(self.samp_rate)
-        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, self.passband_fc, 1e3, window.WIN_HAMMING, 6.76))
-        self.low_pass_filter_0_0.set_taps(firdes.low_pass(1, self.samp_rate, self.passband_fc, 1e3, window.WIN_HAMMING, 6.76))
+        self.custom_passband_real_to_iq_complex_0.set_samp_rate(self.samp_rate)
         self.qtgui_freq_sink_x_0.set_frequency_range(0, self.samp_rate)
 
     def get_sps(self):
