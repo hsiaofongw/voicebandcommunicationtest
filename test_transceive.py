@@ -5,14 +5,19 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: Test packet mux and demux
+# Title: Test transceiving
 # GNU Radio version: 3.10.9.2
 
 from PyQt5 import Qt
 from gnuradio import qtgui
+import os
+import sys
+sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
+
+from custom_packet_formatter import custom_packet_formatter  # grc-generated hier_block
+from garbage_padded_stream import garbage_padded_stream  # grc-generated hier_block
 from gnuradio import analog
 from gnuradio import blocks
-import numpy
 import pmt
 from gnuradio import blocks, gr
 from gnuradio import channels
@@ -21,7 +26,6 @@ from gnuradio import digital
 from gnuradio import filter
 from gnuradio import gr
 from gnuradio.fft import window
-import sys
 import signal
 from PyQt5 import Qt
 from argparse import ArgumentParser
@@ -35,12 +39,12 @@ import sip
 
 
 
-class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
+class test_transceive(gr.top_block, Qt.QWidget):
 
     def __init__(self, dest_host='127.0.0.1', dest_port='42028', filtersize=84, in_file='in.bin', noisevoltage=0.1, num_pream_packets=10, out='out.bin', packet_size=16, passband_fc=1800, samp_rate=48000, sps=72, txgain=1, wav_out='out.wav'):
-        gr.top_block.__init__(self, "Test packet mux and demux", catch_exceptions=True)
+        gr.top_block.__init__(self, "Test transceiving", catch_exceptions=True)
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("Test packet mux and demux")
+        self.setWindowTitle("Test transceiving")
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
@@ -58,7 +62,7 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "test_packet_mux_and_demux")
+        self.settings = Qt.QSettings("GNU Radio", "test_transceive")
 
         try:
             geometry = self.settings.value("geometry")
@@ -95,7 +99,6 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
         self.variable_adaptive_algorithm_0 = variable_adaptive_algorithm_0 = digital.adaptive_algorithm_cma( constellationobj, .0001, 4).base()
         self.garbage_preamble_length_n_bytes = garbage_preamble_length_n_bytes = packet_size*num_pream_packets
         self.format_used = format_used = digital.header_format_counter(access_code,0,8)
-        self.format_default = format_default = digital.header_format_default(access_code,0)
 
         ##################################################
         # Blocks
@@ -208,9 +211,10 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
                 1e3,
                 window.WIN_HAMMING,
                 6.76))
+        self.garbage_padded_stream_0 = garbage_padded_stream(
+            garbage_preamble_length_n_bytes=garbage_preamble_length_n_bytes,
+        )
         self.digital_protocol_parser_b_0 = digital.protocol_parser_b(format_used)
-        self.digital_protocol_formatter_bb_1 = digital.protocol_formatter_bb(format_default, "packet_len")
-        self.digital_protocol_formatter_bb_0 = digital.protocol_formatter_bb(format_used, "packet_len")
         self.digital_pfb_clock_sync_xxx_0 = digital.pfb_clock_sync_ccf(sps, (2*3.14/100), variable_rrc_filter_taps_0, filtersize, 0, 1.5, 2)
         self.digital_map_bb_0 = digital.map_bb([0,1,3,2])
         self.digital_linear_equalizer_0 = digital.linear_equalizer(15, 2, variable_adaptive_algorithm_0, True, [ ], 'corr_est')
@@ -227,9 +231,7 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
             (),
             0)
         self.digital_diff_decoder_bb_0 = digital.diff_decoder_bb(4, digital.DIFF_DIFFERENTIAL)
-        self.digital_crc32_bb_3 = digital.crc32_bb(False, "packet_len", True)
         self.digital_crc32_bb_2 = digital.crc32_bb(True, "packet_len", True)
-        self.digital_crc32_bb_1 = digital.crc32_bb(False, "packet_len", True)
         self.digital_crc32_bb_0 = digital.crc32_bb(True, "frame_len", True)
         self.digital_costas_loop_cc_0 = digital.costas_loop_cc((2*3.14/100), 4, False)
         self.digital_correlate_access_code_xx_ts_0 = digital.correlate_access_code_bb_ts(access_code,
@@ -244,6 +246,10 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
             log=False,
             truncate=False)
         self.digital_constellation_decoder_cb_0 = digital.constellation_decoder_cb(constellationobj)
+        self.custom_packet_formatter_0 = custom_packet_formatter(
+            access_code=access_code,
+            packet_size=packet_size,
+        )
         self.channels_channel_model_0 = channels.channel_model(
             noise_voltage=noisevoltage,
             frequency_offset=0.0,
@@ -259,19 +265,13 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
             blocks.FORMAT_FLOAT,
             False
             )
-        self.blocks_vector_source_x_0_0 = blocks.vector_source_f((1,), True, 1, [])
-        self.blocks_vector_source_x_0 = blocks.vector_source_b((1,), True, 1, [])
         self.blocks_unpack_k_bits_bb_0 = blocks.unpack_k_bits_bb(2)
         self.blocks_throttle2_1 = blocks.throttle( gr.sizeof_float*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
-        self.blocks_tagged_stream_mux_2 = blocks.tagged_stream_mux(gr.sizeof_char*1, 'packet_len', 0)
-        self.blocks_tagged_stream_mux_0 = blocks.tagged_stream_mux(gr.sizeof_char*1, 'packet_len', 0)
         self.blocks_tag_gate_1 = blocks.tag_gate(gr.sizeof_float * 1, False)
         self.blocks_tag_gate_1.set_single_key("")
         self.blocks_tag_gate_0 = blocks.tag_gate(gr.sizeof_char * 1, False)
         self.blocks_tag_gate_0.set_single_key("")
         self.blocks_sub_xx_0_0 = blocks.sub_ff(1)
-        self.blocks_sub_xx_0 = blocks.sub_ff(1)
-        self.blocks_stream_to_tagged_stream_0 = blocks.stream_to_tagged_stream(gr.sizeof_char, 1, packet_size, "packet_len")
         self.blocks_repack_bits_bb_3 = blocks.repack_bits_bb(8, 1, "", False, gr.GR_MSB_FIRST)
         self.blocks_repack_bits_bb_2 = blocks.repack_bits_bb(1, 8, "packet_len", False, gr.GR_MSB_FIRST)
         self.blocks_repack_bits_bb_1 = blocks.repack_bits_bb(1, 8, "frame_len", False, gr.GR_MSB_FIRST)
@@ -279,28 +279,19 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
         self.blocks_multiply_xx_0_0_0_0 = blocks.multiply_vff(1)
         self.blocks_multiply_xx_0_0_0 = blocks.multiply_vff(1)
         self.blocks_multiply_xx_0_0 = blocks.multiply_vff(1)
-        self.blocks_multiply_xx_0 = blocks.multiply_vff(1)
         self.blocks_multiply_const_vxx_1 = blocks.multiply_const_ff((2*txgain))
         self.blocks_multiply_const_vxx_0_0 = blocks.multiply_const_ff((-2))
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(2)
         self.blocks_message_debug_1 = blocks.message_debug(True, gr.log_levels.info)
         self.blocks_message_debug_0 = blocks.message_debug(False, gr.log_levels.debug)
         self.blocks_float_to_complex_0 = blocks.float_to_complex(1)
-        self.blocks_float_to_char_0 = blocks.float_to_char(1, 1)
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_char*1, in_file, False, 0, 0)
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
-        self.blocks_delay_0_0 = blocks.delay(gr.sizeof_char*1, garbage_preamble_length_n_bytes)
-        self.blocks_delay_0 = blocks.delay(gr.sizeof_char*1, garbage_preamble_length_n_bytes)
         self.blocks_complex_to_float_1 = blocks.complex_to_float(1)
         self.blocks_complex_to_float_0_0 = blocks.complex_to_float(1)
         self.blocks_complex_to_float_0 = blocks.complex_to_float(1)
-        self.blocks_char_to_float_0_0_0_0 = blocks.char_to_float(1, 1)
-        self.blocks_char_to_float_0_0_0 = blocks.char_to_float(1, 1)
-        self.blocks_char_to_float_0_0 = blocks.char_to_float(1, 1)
-        self.blocks_add_xx_0 = blocks.add_vff(1)
         self.analog_sig_source_x_0_0 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, passband_fc, 1, 0, 0)
         self.analog_sig_source_x_0 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, passband_fc, 1, 0, 0)
-        self.analog_random_source_x_0 = blocks.vector_source_b(list(map(int, numpy.random.randint(0, 256, 1000))), True)
 
 
         ##################################################
@@ -313,29 +304,20 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
         self.msg_connect((self.pdu_pdu_lambda_0, 'pdu'), (self.digital_header_payload_demux_0, 'header_data'))
         self.msg_connect((self.pdu_pdu_lambda_1, 'pdu'), (self.pdu_pdu_filter_0, 'pdus'))
         self.msg_connect((self.pdu_tagged_stream_to_pdu_0, 'pdus'), (self.pdu_pdu_lambda_1, 'pdu'))
-        self.connect((self.analog_random_source_x_0, 0), (self.blocks_char_to_float_0_0_0, 0))
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_complex_to_float_0, 0))
         self.connect((self.analog_sig_source_x_0_0, 0), (self.blocks_complex_to_float_0_0, 0))
-        self.connect((self.blocks_add_xx_0, 0), (self.blocks_float_to_char_0, 0))
-        self.connect((self.blocks_char_to_float_0_0, 0), (self.blocks_sub_xx_0, 1))
-        self.connect((self.blocks_char_to_float_0_0_0, 0), (self.blocks_multiply_xx_0, 1))
-        self.connect((self.blocks_char_to_float_0_0_0_0, 0), (self.blocks_add_xx_0, 0))
         self.connect((self.blocks_complex_to_float_0, 0), (self.blocks_multiply_xx_0_0, 0))
         self.connect((self.blocks_complex_to_float_0, 1), (self.blocks_multiply_xx_0_0_0, 0))
         self.connect((self.blocks_complex_to_float_0_0, 1), (self.blocks_multiply_xx_0_0_0_0, 0))
         self.connect((self.blocks_complex_to_float_0_0, 0), (self.blocks_multiply_xx_0_1, 0))
         self.connect((self.blocks_complex_to_float_1, 0), (self.blocks_multiply_xx_0_0, 1))
         self.connect((self.blocks_complex_to_float_1, 1), (self.blocks_multiply_xx_0_0_0, 1))
-        self.connect((self.blocks_delay_0, 0), (self.blocks_char_to_float_0_0, 0))
-        self.connect((self.blocks_delay_0_0, 0), (self.blocks_char_to_float_0_0_0_0, 0))
-        self.connect((self.blocks_file_source_0, 0), (self.blocks_delay_0_0, 0))
-        self.connect((self.blocks_float_to_char_0, 0), (self.blocks_stream_to_tagged_stream_0, 0))
+        self.connect((self.blocks_file_source_0, 0), (self.garbage_padded_stream_0, 0))
         self.connect((self.blocks_float_to_complex_0, 0), (self.channels_channel_model_0, 0))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.low_pass_filter_0, 0))
         self.connect((self.blocks_multiply_const_vxx_0_0, 0), (self.low_pass_filter_0_0, 0))
         self.connect((self.blocks_multiply_const_vxx_1, 0), (self.blocks_tag_gate_1, 0))
         self.connect((self.blocks_multiply_const_vxx_1, 0), (self.blocks_throttle2_1, 0))
-        self.connect((self.blocks_multiply_xx_0, 0), (self.blocks_add_xx_0, 1))
         self.connect((self.blocks_multiply_xx_0_0, 0), (self.blocks_sub_xx_0_0, 0))
         self.connect((self.blocks_multiply_xx_0_0_0, 0), (self.blocks_sub_xx_0_0, 1))
         self.connect((self.blocks_multiply_xx_0_0_0_0, 0), (self.blocks_multiply_const_vxx_0_0, 0))
@@ -343,46 +325,36 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_repack_bits_bb_1, 0), (self.digital_crc32_bb_0, 0))
         self.connect((self.blocks_repack_bits_bb_2, 0), (self.digital_crc32_bb_2, 0))
         self.connect((self.blocks_repack_bits_bb_3, 0), (self.digital_header_payload_demux_0, 0))
-        self.connect((self.blocks_stream_to_tagged_stream_0, 0), (self.digital_crc32_bb_3, 0))
-        self.connect((self.blocks_sub_xx_0, 0), (self.blocks_multiply_xx_0, 0))
         self.connect((self.blocks_sub_xx_0_0, 0), (self.blocks_multiply_const_vxx_1, 0))
         self.connect((self.blocks_tag_gate_0, 0), (self.digital_constellation_modulator_0, 0))
         self.connect((self.blocks_tag_gate_1, 0), (self.blocks_multiply_xx_0_0_0_0, 1))
         self.connect((self.blocks_tag_gate_1, 0), (self.blocks_multiply_xx_0_1, 1))
-        self.connect((self.blocks_tagged_stream_mux_0, 0), (self.digital_crc32_bb_1, 0))
-        self.connect((self.blocks_tagged_stream_mux_2, 0), (self.blocks_tag_gate_0, 0))
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_wavfile_sink_0, 0))
         self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.digital_correlate_access_code_xx_ts_0, 0))
-        self.connect((self.blocks_vector_source_x_0, 0), (self.blocks_delay_0, 0))
-        self.connect((self.blocks_vector_source_x_0_0, 0), (self.blocks_sub_xx_0, 0))
         self.connect((self.channels_channel_model_0, 0), (self.digital_pfb_clock_sync_xxx_0, 0))
         self.connect((self.channels_channel_model_0, 0), (self.qtgui_freq_sink_x_0, 0))
+        self.connect((self.custom_packet_formatter_0, 0), (self.blocks_tag_gate_0, 0))
         self.connect((self.digital_constellation_decoder_cb_0, 0), (self.digital_diff_decoder_bb_0, 0))
         self.connect((self.digital_constellation_modulator_0, 0), (self.blocks_complex_to_float_1, 0))
         self.connect((self.digital_correlate_access_code_xx_ts_0, 0), (self.blocks_repack_bits_bb_2, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.digital_constellation_decoder_cb_0, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.qtgui_const_sink_x_0, 0))
         self.connect((self.digital_crc32_bb_0, 0), (self.pdu_tagged_stream_to_pdu_0, 0))
-        self.connect((self.digital_crc32_bb_1, 0), (self.blocks_tagged_stream_mux_2, 1))
-        self.connect((self.digital_crc32_bb_1, 0), (self.digital_protocol_formatter_bb_1, 0))
         self.connect((self.digital_crc32_bb_2, 0), (self.blocks_repack_bits_bb_3, 0))
-        self.connect((self.digital_crc32_bb_3, 0), (self.blocks_tagged_stream_mux_0, 1))
-        self.connect((self.digital_crc32_bb_3, 0), (self.digital_protocol_formatter_bb_0, 0))
         self.connect((self.digital_diff_decoder_bb_0, 0), (self.digital_map_bb_0, 0))
         self.connect((self.digital_header_payload_demux_0, 1), (self.blocks_repack_bits_bb_1, 0))
         self.connect((self.digital_header_payload_demux_0, 0), (self.digital_protocol_parser_b_0, 0))
         self.connect((self.digital_linear_equalizer_0, 0), (self.digital_costas_loop_cc_0, 0))
         self.connect((self.digital_map_bb_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
         self.connect((self.digital_pfb_clock_sync_xxx_0, 0), (self.digital_linear_equalizer_0, 0))
-        self.connect((self.digital_protocol_formatter_bb_0, 0), (self.blocks_tagged_stream_mux_0, 0))
-        self.connect((self.digital_protocol_formatter_bb_1, 0), (self.blocks_tagged_stream_mux_2, 0))
+        self.connect((self.garbage_padded_stream_0, 0), (self.custom_packet_formatter_0, 0))
         self.connect((self.low_pass_filter_0, 0), (self.blocks_float_to_complex_0, 0))
         self.connect((self.low_pass_filter_0_0, 0), (self.blocks_float_to_complex_0, 1))
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.network_tcp_sink_0, 0))
 
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "test_packet_mux_and_demux")
+        self.settings = Qt.QSettings("GNU Radio", "test_transceive")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -441,8 +413,7 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
     def set_packet_size(self, packet_size):
         self.packet_size = packet_size
         self.set_garbage_preamble_length_n_bytes(self.packet_size*self.num_pream_packets)
-        self.blocks_stream_to_tagged_stream_0.set_packet_len(self.packet_size)
-        self.blocks_stream_to_tagged_stream_0.set_packet_len_pmt(self.packet_size)
+        self.custom_packet_formatter_0.set_packet_size(self.packet_size)
 
     def get_passband_fc(self):
         return self.passband_fc
@@ -500,8 +471,8 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
 
     def set_access_code(self, access_code):
         self.access_code = access_code
-        self.set_format_default(digital.header_format_default(self.access_code,0))
         self.set_format_used(digital.header_format_counter(self.access_code,0,8))
+        self.custom_packet_formatter_0.set_access_code(self.access_code)
 
     def get_variable_rrc_filter_taps_0(self):
         return self.variable_rrc_filter_taps_0
@@ -521,20 +492,13 @@ class test_packet_mux_and_demux(gr.top_block, Qt.QWidget):
 
     def set_garbage_preamble_length_n_bytes(self, garbage_preamble_length_n_bytes):
         self.garbage_preamble_length_n_bytes = garbage_preamble_length_n_bytes
-        self.blocks_delay_0.set_dly(int(self.garbage_preamble_length_n_bytes))
-        self.blocks_delay_0_0.set_dly(int(self.garbage_preamble_length_n_bytes))
+        self.garbage_padded_stream_0.set_garbage_preamble_length_n_bytes(self.garbage_preamble_length_n_bytes)
 
     def get_format_used(self):
         return self.format_used
 
     def set_format_used(self, format_used):
         self.format_used = format_used
-
-    def get_format_default(self):
-        return self.format_default
-
-    def set_format_default(self, format_default):
-        self.format_default = format_default
 
 
 
@@ -582,7 +546,7 @@ def argument_parser():
     return parser
 
 
-def main(top_block_cls=test_packet_mux_and_demux, options=None):
+def main(top_block_cls=test_transceive, options=None):
     if options is None:
         options = argument_parser().parse_args()
 
