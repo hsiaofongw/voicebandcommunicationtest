@@ -42,7 +42,7 @@ import sip
 
 class test_transceive(gr.top_block, Qt.QWidget):
 
-    def __init__(self, dest_host='127.0.0.1', dest_port='42028', filtersize=84, in_file='in.bin', noisevoltage=0.1, num_pream_packets=10, out='out.bin', packet_size=16, passband_fc=3600, samp_rate=48000, sps=72, txgain=2, wav_out='out.wav'):
+    def __init__(self, dest_host='127.0.0.1', dest_port='42028', filtersize=84, in_file='in.bin', noisevoltage=0.1, num_pream_packets=20, out='out.bin', packet_size=16, passband_fc=3600, samp_rate=48000, sps=72, txgain=2, wav_out='out.wav'):
         gr.top_block.__init__(self, "Test transceiving", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("Test transceiving")
@@ -92,14 +92,13 @@ class test_transceive(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.constellationobj = constellationobj = digital.constellation_calcdist([-1-1j, -1+1j, 1+1j, 1-1j], [0, 1, 3, 2],
-        4, 1, digital.constellation.AMPLITUDE_NORMALIZATION).base()
-        self.constellationobj.set_npwr(1.0)
+        self.constellation_bpsk = constellation_bpsk = digital.constellation_bpsk().base()
+        self.constellation_bpsk.set_npwr(0)
         self.access_code = access_code = "11100001010110101110100010010011"
         self.variable_rrc_filter_taps_0 = variable_rrc_filter_taps_0 = firdes.root_raised_cosine(sps+1, samp_rate,samp_rate/sps, 0.35, (11*sps))
-        self.variable_adaptive_algorithm_0 = variable_adaptive_algorithm_0 = digital.adaptive_algorithm_cma( constellationobj, .0001, 4).base()
         self.garbage_preamble_length_n_bytes = garbage_preamble_length_n_bytes = packet_size*num_pream_packets
         self.format_used = format_used = digital.header_format_counter(access_code,0,8)
+        self.adaptive_algorithm_bpsk = adaptive_algorithm_bpsk = digital.adaptive_algorithm_cma( constellation_bpsk, .0001, 2).base()
 
         ##################################################
         # Blocks
@@ -191,12 +190,11 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.pdu_pdu_to_tagged_stream_0 = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         self.network_tcp_sink_0 = network.tcp_sink(gr.sizeof_char, 1, dest_host, int(dest_port),1)
         self.digital_pfb_clock_sync_xxx_0 = digital.pfb_clock_sync_ccf(sps, (2*3.14/100), variable_rrc_filter_taps_0, filtersize, 0, 1.5, 2)
-        self.digital_map_bb_0 = digital.map_bb([0,1,3,2])
-        self.digital_linear_equalizer_0 = digital.linear_equalizer(15, 2, variable_adaptive_algorithm_0, True, [ ], 'corr_est')
-        self.digital_diff_decoder_bb_0 = digital.diff_decoder_bb(4, digital.DIFF_DIFFERENTIAL)
-        self.digital_costas_loop_cc_0 = digital.costas_loop_cc((2*3.14/100), 4, False)
+        self.digital_linear_equalizer_0 = digital.linear_equalizer(15, 2, adaptive_algorithm_bpsk, True, [ ], 'corr_est')
+        self.digital_diff_decoder_bb_0_0 = digital.diff_decoder_bb(2, digital.DIFF_DIFFERENTIAL)
+        self.digital_costas_loop_cc_0_0 = digital.costas_loop_cc((2*3.14/100), 2, False)
         self.digital_constellation_modulator_0 = digital.generic_mod(
-            constellation=constellationobj,
+            constellation=constellation_bpsk,
             differential=True,
             samples_per_symbol=sps,
             pre_diff_code=True,
@@ -204,7 +202,7 @@ class test_transceive(gr.top_block, Qt.QWidget):
             verbose=False,
             log=False,
             truncate=False)
-        self.digital_constellation_decoder_cb_0 = digital.constellation_decoder_cb(constellationobj)
+        self.digital_constellation_decoder_cb_0 = digital.constellation_decoder_cb(constellation_bpsk)
         self.custom_stream_prepend_0 = custom_stream_prepend(
             garbage_preamble_length_n_bytes=garbage_preamble_length_n_bytes,
         )
@@ -242,7 +240,6 @@ class test_transceive(gr.top_block, Qt.QWidget):
             blocks.FORMAT_FLOAT,
             False
             )
-        self.blocks_unpack_k_bits_bb_0 = blocks.unpack_k_bits_bb(2)
         self.blocks_throttle2_1 = blocks.throttle( gr.sizeof_float*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_tag_gate_1 = blocks.tag_gate(gr.sizeof_float * 1, False)
         self.blocks_tag_gate_1.set_single_key("")
@@ -267,7 +264,6 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_tag_gate_1, 0), (self.custom_passband_real_to_iq_complex_0, 0))
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_tag_gate_1, 0))
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_wavfile_sink_0, 0))
-        self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.custom_packet_parser_0, 0))
         self.connect((self.channels_channel_model_0, 0), (self.digital_pfb_clock_sync_xxx_0, 0))
         self.connect((self.channels_channel_model_0, 0), (self.qtgui_freq_sink_x_0, 0))
         self.connect((self.custom_iq_complex_to_passband_real_0, 0), (self.blocks_throttle2_1, 0))
@@ -275,13 +271,12 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.connect((self.custom_packet_parser_0, 0), (self.custom_remove_preamble_0, 0))
         self.connect((self.custom_passband_real_to_iq_complex_0, 0), (self.channels_channel_model_0, 0))
         self.connect((self.custom_stream_prepend_0, 0), (self.custom_packet_formatter_0, 0))
-        self.connect((self.digital_constellation_decoder_cb_0, 0), (self.digital_diff_decoder_bb_0, 0))
+        self.connect((self.digital_constellation_decoder_cb_0, 0), (self.digital_diff_decoder_bb_0_0, 0))
         self.connect((self.digital_constellation_modulator_0, 0), (self.custom_iq_complex_to_passband_real_0, 0))
-        self.connect((self.digital_costas_loop_cc_0, 0), (self.digital_constellation_decoder_cb_0, 0))
-        self.connect((self.digital_costas_loop_cc_0, 0), (self.qtgui_const_sink_x_0, 0))
-        self.connect((self.digital_diff_decoder_bb_0, 0), (self.digital_map_bb_0, 0))
-        self.connect((self.digital_linear_equalizer_0, 0), (self.digital_costas_loop_cc_0, 0))
-        self.connect((self.digital_map_bb_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
+        self.connect((self.digital_costas_loop_cc_0_0, 0), (self.digital_constellation_decoder_cb_0, 0))
+        self.connect((self.digital_costas_loop_cc_0_0, 0), (self.qtgui_const_sink_x_0, 0))
+        self.connect((self.digital_diff_decoder_bb_0_0, 0), (self.custom_packet_parser_0, 0))
+        self.connect((self.digital_linear_equalizer_0, 0), (self.digital_costas_loop_cc_0_0, 0))
         self.connect((self.digital_pfb_clock_sync_xxx_0, 0), (self.digital_linear_equalizer_0, 0))
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.network_tcp_sink_0, 0))
 
@@ -388,12 +383,12 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.wav_out = wav_out
         self.blocks_wavfile_sink_0.open(self.wav_out)
 
-    def get_constellationobj(self):
-        return self.constellationobj
+    def get_constellation_bpsk(self):
+        return self.constellation_bpsk
 
-    def set_constellationobj(self, constellationobj):
-        self.constellationobj = constellationobj
-        self.digital_constellation_decoder_cb_0.set_constellation(self.constellationobj)
+    def set_constellation_bpsk(self, constellation_bpsk):
+        self.constellation_bpsk = constellation_bpsk
+        self.digital_constellation_decoder_cb_0.set_constellation(self.constellation_bpsk)
 
     def get_access_code(self):
         return self.access_code
@@ -410,12 +405,6 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.variable_rrc_filter_taps_0 = variable_rrc_filter_taps_0
         self.digital_pfb_clock_sync_xxx_0.update_taps(self.variable_rrc_filter_taps_0)
 
-    def get_variable_adaptive_algorithm_0(self):
-        return self.variable_adaptive_algorithm_0
-
-    def set_variable_adaptive_algorithm_0(self, variable_adaptive_algorithm_0):
-        self.variable_adaptive_algorithm_0 = variable_adaptive_algorithm_0
-
     def get_garbage_preamble_length_n_bytes(self):
         return self.garbage_preamble_length_n_bytes
 
@@ -428,6 +417,12 @@ class test_transceive(gr.top_block, Qt.QWidget):
 
     def set_format_used(self, format_used):
         self.format_used = format_used
+
+    def get_adaptive_algorithm_bpsk(self):
+        return self.adaptive_algorithm_bpsk
+
+    def set_adaptive_algorithm_bpsk(self, adaptive_algorithm_bpsk):
+        self.adaptive_algorithm_bpsk = adaptive_algorithm_bpsk
 
 
 
@@ -449,7 +444,7 @@ def argument_parser():
         "--noisevoltage", dest="noisevoltage", type=eng_float, default=eng_notation.num_to_str(float(0.1)),
         help="Set Noise Voltage [default=%(default)r]")
     parser.add_argument(
-        "--num-pream-packets", dest="num_pream_packets", type=intx, default=10,
+        "--num-pream-packets", dest="num_pream_packets", type=intx, default=20,
         help="Set Number of preamble garbage packets [default=%(default)r]")
     parser.add_argument(
         "--out", dest="out", type=str, default='out.bin',
