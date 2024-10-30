@@ -19,10 +19,9 @@ from custom_passband_real_to_iq_complex import custom_passband_real_to_iq_comple
 from custom_remove_preamble import custom_remove_preamble  # grc-generated hier_block
 from gnuradio import blocks
 from gnuradio import blocks, gr
-from gnuradio import channels
-from gnuradio.filter import firdes
 from gnuradio import digital
 from gnuradio import gr
+from gnuradio.filter import firdes
 from gnuradio.fft import window
 import signal
 from PyQt5 import Qt
@@ -199,14 +198,8 @@ class test_bpsk_receive(gr.top_block, Qt.QWidget):
         self.custom_packet_parser_0 = custom_packet_parser(
             samp_rate=48000,
         )
-        self.channels_channel_model_0 = channels.channel_model(
-            noise_voltage=noisevoltage,
-            frequency_offset=0.0,
-            epsilon=1.0,
-            taps=[1.0],
-            noise_seed=0,
-            block_tags=False)
         self.blocks_wavfile_source_0 = blocks.wavfile_source(wav_in, True)
+        self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_float*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_message_debug_1_0 = blocks.message_debug(True, gr.log_levels.info)
         self.blocks_message_debug_1 = blocks.message_debug(True, gr.log_levels.info)
 
@@ -217,11 +210,11 @@ class test_bpsk_receive(gr.top_block, Qt.QWidget):
         self.msg_connect((self.custom_packet_parser_0, 'header_data'), (self.blocks_message_debug_1_0, 'print'))
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.blocks_message_debug_1, 'print'))
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.pdu_pdu_to_tagged_stream_0, 'pdus'))
-        self.connect((self.blocks_wavfile_source_0, 0), (self.custom_passband_real_to_iq_complex_0, 0))
-        self.connect((self.channels_channel_model_0, 0), (self.digital_pfb_clock_sync_xxx_0, 0))
-        self.connect((self.channels_channel_model_0, 0), (self.qtgui_freq_sink_x_0, 0))
+        self.connect((self.blocks_throttle2_0, 0), (self.custom_passband_real_to_iq_complex_0, 0))
+        self.connect((self.blocks_wavfile_source_0, 0), (self.blocks_throttle2_0, 0))
         self.connect((self.custom_packet_parser_0, 0), (self.custom_remove_preamble_0, 0))
-        self.connect((self.custom_passband_real_to_iq_complex_0, 0), (self.channels_channel_model_0, 0))
+        self.connect((self.custom_passband_real_to_iq_complex_0, 0), (self.digital_pfb_clock_sync_xxx_0, 0))
+        self.connect((self.custom_passband_real_to_iq_complex_0, 0), (self.qtgui_freq_sink_x_0, 0))
         self.connect((self.digital_constellation_decoder_cb_0, 0), (self.digital_diff_decoder_bb_0_0, 0))
         self.connect((self.digital_costas_loop_cc_0_0, 0), (self.digital_constellation_decoder_cb_0, 0))
         self.connect((self.digital_costas_loop_cc_0_0, 0), (self.qtgui_const_sink_x_0, 0))
@@ -262,7 +255,6 @@ class test_bpsk_receive(gr.top_block, Qt.QWidget):
 
     def set_noisevoltage(self, noisevoltage):
         self.noisevoltage = noisevoltage
-        self.channels_channel_model_0.set_noise_voltage(self.noisevoltage)
 
     def get_num_pream_packets(self):
         return self.num_pream_packets
@@ -300,6 +292,7 @@ class test_bpsk_receive(gr.top_block, Qt.QWidget):
         self.set_variable_rrc_filter_taps_0(firdes.root_raised_cosine(self.sps+1, self.samp_rate, self.samp_rate/self.sps, 0.35, (11*self.sps)))
         self.custom_passband_real_to_iq_complex_0.set_samp_rate(self.samp_rate)
         self.qtgui_freq_sink_x_0.set_frequency_range(0, self.samp_rate)
+        self.blocks_throttle2_0.set_sample_rate(self.samp_rate)
 
     def get_sps(self):
         return self.sps
