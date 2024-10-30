@@ -19,8 +19,9 @@ from custom_packet_formatter import custom_packet_formatter  # grc-generated hie
 from custom_packet_parser import custom_packet_parser  # grc-generated hier_block
 from custom_passband_real_to_iq_complex import custom_passband_real_to_iq_complex  # grc-generated hier_block
 from custom_remove_preamble import custom_remove_preamble  # grc-generated hier_block
-from garbage_padded_stream import garbage_padded_stream  # grc-generated hier_block
+from custom_stream_prepend import custom_stream_prepend  # grc-generated hier_block
 from gnuradio import blocks
+import numpy
 import pmt
 from gnuradio import blocks, gr
 from gnuradio import channels
@@ -41,7 +42,7 @@ import sip
 
 class test_transceive(gr.top_block, Qt.QWidget):
 
-    def __init__(self, dest_host='127.0.0.1', dest_port='42028', filtersize=84, in_file='in.bin', noisevoltage=0.1, num_pream_packets=10, out='out.bin', packet_size=16, passband_fc=1800, samp_rate=48000, sps=72, txgain=2, wav_out='out.wav'):
+    def __init__(self, dest_host='127.0.0.1', dest_port='42028', filtersize=84, in_file='in.bin', noisevoltage=0.1, num_pream_packets=10, out='out.bin', packet_size=16, passband_fc=3600, samp_rate=48000, sps=72, txgain=2, wav_out='out.wav'):
         gr.top_block.__init__(self, "Test transceiving", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("Test transceiving")
@@ -189,9 +190,6 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.top_layout.addWidget(self._qtgui_const_sink_x_0_win)
         self.pdu_pdu_to_tagged_stream_0 = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         self.network_tcp_sink_0 = network.tcp_sink(gr.sizeof_char, 1, dest_host, int(dest_port),1)
-        self.garbage_padded_stream_0 = garbage_padded_stream(
-            garbage_preamble_length_n_bytes=garbage_preamble_length_n_bytes,
-        )
         self.digital_pfb_clock_sync_xxx_0 = digital.pfb_clock_sync_ccf(sps, (2*3.14/100), variable_rrc_filter_taps_0, filtersize, 0, 1.5, 2)
         self.digital_map_bb_0 = digital.map_bb([0,1,3,2])
         self.digital_linear_equalizer_0 = digital.linear_equalizer(15, 2, variable_adaptive_algorithm_0, True, [ ], 'corr_est')
@@ -207,6 +205,9 @@ class test_transceive(gr.top_block, Qt.QWidget):
             log=False,
             truncate=False)
         self.digital_constellation_decoder_cb_0 = digital.constellation_decoder_cb(constellationobj)
+        self.custom_stream_prepend_0 = custom_stream_prepend(
+            garbage_preamble_length_n_bytes=garbage_preamble_length_n_bytes,
+        )
         self.custom_remove_preamble_0 = custom_remove_preamble(
             num_pream_packets=num_pream_packets,
         )
@@ -251,6 +252,7 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.blocks_message_debug_1 = blocks.message_debug(True, gr.log_levels.info)
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_char*1, in_file, False, 0, 0)
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
+        self.analog_random_source_x_0 = blocks.vector_source_b(list(map(int, numpy.random.randint(0, 256, 1000))), True)
 
 
         ##################################################
@@ -259,7 +261,8 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.msg_connect((self.custom_packet_parser_0, 'header_data'), (self.blocks_message_debug_1_0, 'print'))
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.blocks_message_debug_1, 'print'))
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.pdu_pdu_to_tagged_stream_0, 'pdus'))
-        self.connect((self.blocks_file_source_0, 0), (self.garbage_padded_stream_0, 0))
+        self.connect((self.analog_random_source_x_0, 0), (self.custom_stream_prepend_0, 1))
+        self.connect((self.blocks_file_source_0, 0), (self.custom_stream_prepend_0, 0))
         self.connect((self.blocks_tag_gate_0, 0), (self.digital_constellation_modulator_0, 0))
         self.connect((self.blocks_tag_gate_1, 0), (self.custom_passband_real_to_iq_complex_0, 0))
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_tag_gate_1, 0))
@@ -271,6 +274,7 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.connect((self.custom_packet_formatter_0, 0), (self.blocks_tag_gate_0, 0))
         self.connect((self.custom_packet_parser_0, 0), (self.custom_remove_preamble_0, 0))
         self.connect((self.custom_passband_real_to_iq_complex_0, 0), (self.channels_channel_model_0, 0))
+        self.connect((self.custom_stream_prepend_0, 0), (self.custom_packet_formatter_0, 0))
         self.connect((self.digital_constellation_decoder_cb_0, 0), (self.digital_diff_decoder_bb_0, 0))
         self.connect((self.digital_constellation_modulator_0, 0), (self.custom_iq_complex_to_passband_real_0, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.digital_constellation_decoder_cb_0, 0))
@@ -279,7 +283,6 @@ class test_transceive(gr.top_block, Qt.QWidget):
         self.connect((self.digital_linear_equalizer_0, 0), (self.digital_costas_loop_cc_0, 0))
         self.connect((self.digital_map_bb_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
         self.connect((self.digital_pfb_clock_sync_xxx_0, 0), (self.digital_linear_equalizer_0, 0))
-        self.connect((self.garbage_padded_stream_0, 0), (self.custom_packet_formatter_0, 0))
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.network_tcp_sink_0, 0))
 
 
@@ -418,7 +421,7 @@ class test_transceive(gr.top_block, Qt.QWidget):
 
     def set_garbage_preamble_length_n_bytes(self, garbage_preamble_length_n_bytes):
         self.garbage_preamble_length_n_bytes = garbage_preamble_length_n_bytes
-        self.garbage_padded_stream_0.set_garbage_preamble_length_n_bytes(self.garbage_preamble_length_n_bytes)
+        self.custom_stream_prepend_0.set_garbage_preamble_length_n_bytes(self.garbage_preamble_length_n_bytes)
 
     def get_format_used(self):
         return self.format_used
@@ -455,7 +458,7 @@ def argument_parser():
         "--packet-size", dest="packet_size", type=intx, default=16,
         help="Set Packet Size [default=%(default)r]")
     parser.add_argument(
-        "--passband-fc", dest="passband_fc", type=eng_float, default=eng_notation.num_to_str(float(1800)),
+        "--passband-fc", dest="passband_fc", type=eng_float, default=eng_notation.num_to_str(float(3600)),
         help="Set Passband Center Frequency [default=%(default)r]")
     parser.add_argument(
         "--samp-rate", dest="samp_rate", type=eng_float, default=eng_notation.num_to_str(float(48000)),
