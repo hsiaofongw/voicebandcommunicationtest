@@ -118,7 +118,7 @@ class test_vco(gr.top_block, Qt.QWidget):
 
         self.top_layout.addWidget(self._qtgui_waterfall_sink_x_1_win)
         self.qtgui_time_sink_x_0 = qtgui.time_sink_f(
-            48000, #size
+            (int(1.5*samp_rate)), #size
             samp_rate, #samp_rate
             "", #name
             2, #number of inputs

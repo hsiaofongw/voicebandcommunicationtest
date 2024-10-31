@@ -183,7 +183,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1296, 336.0]
+    coordinate: [1328, 336.0]
     rotation: 0
     state: enabled
 - name: blocks_add_const_vxx_1
@@ -201,7 +201,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1144, 336.0]
+    coordinate: [1160, 336.0]
     rotation: 0
     state: enabled
 - name: blocks_char_to_float_0
@@ -253,7 +253,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [952, 336.0]
+    coordinate: [984, 336.0]
     rotation: 0
     state: enabled
 - name: blocks_repeat_0
@@ -457,7 +457,7 @@ blocks:
     marker9: '-1'
     name: '""'
     nconnections: '2'
-    size: '48000'
+    size: int(1.5*samp_rate)
     srate: samp_rate
     stemplot: 'False'
     style1: '1'
