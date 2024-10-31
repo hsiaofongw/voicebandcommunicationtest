@@ -290,9 +290,9 @@ class test_bpsk_receive(gr.top_block, Qt.QWidget):
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
         self.set_variable_rrc_filter_taps_0(firdes.root_raised_cosine(self.sps+1, self.samp_rate, self.samp_rate/self.sps, 0.35, (11*self.sps)))
+        self.blocks_throttle2_0.set_sample_rate(self.samp_rate)
         self.custom_passband_real_to_iq_complex_0.set_samp_rate(self.samp_rate)
         self.qtgui_freq_sink_x_0.set_frequency_range(0, self.samp_rate)
-        self.blocks_throttle2_0.set_sample_rate(self.samp_rate)
 
     def get_sps(self):
         return self.sps
