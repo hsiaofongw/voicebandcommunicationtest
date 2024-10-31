@@ -11,7 +11,7 @@ options:
     gen_linking: dynamic
     generate_options: qt_gui
     hier_block_src_path: '.:'
-    id: bfsk_transceive
+    id: bfsk_receive
     max_nouts: '0'
     output_language: python
     placement: (0,0)
@@ -22,7 +22,7 @@ options:
     run_options: prompt
     sizing_mode: fixed
     thread_safe_setters: ''
-    title: BFSK tranceving
+    title: BFSK Receive
     window_size: (1000,1000)
   states:
     bus_sink: false
@@ -89,48 +89,6 @@ blocks:
     coordinate: [184, 108.0]
     rotation: 0
     state: enabled
-- name: analog_random_source_x_0
-  id: analog_random_source_x
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    max: '256'
-    maxoutbuf: '0'
-    min: '0'
-    minoutbuf: '0'
-    num_samps: '1000'
-    repeat: 'True'
-    type: byte
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [80, 400.0]
-    rotation: 0
-    state: enabled
-- name: blocks_file_source_0
-  id: blocks_file_source
-  parameters:
-    affinity: ''
-    alias: ''
-    begin_tag: pmt.PMT_NIL
-    comment: ''
-    file: in_file
-    length: '0'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    offset: '0'
-    repeat: 'False'
-    type: byte
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [96, 256.0]
-    rotation: 0
-    state: enabled
 - name: blocks_message_debug_1
   id: blocks_message_debug
   parameters:
@@ -143,7 +101,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [888, 832.0]
+    coordinate: [1040, 504.0]
     rotation: 0
     state: enabled
 - name: blocks_message_debug_1_0
@@ -158,48 +116,10 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [568, 984.0]
+    coordinate: [720, 656.0]
     rotation: 0
     state: enabled
-- name: blocks_tag_gate_0
-  id: blocks_tag_gate
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    propagate_tags: 'False'
-    single_key: '""'
-    type: byte
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1152, 356.0]
-    rotation: 0
-    state: enabled
-- name: blocks_tag_gate_1
-  id: blocks_tag_gate
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    propagate_tags: 'False'
-    single_key: '""'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1368, 628.0]
-    rotation: 0
-    state: enabled
-- name: blocks_throttle2_1
+- name: blocks_throttle2_0
   id: blocks_throttle2
   parameters:
     affinity: ''
@@ -217,45 +137,25 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [728, 580.0]
+    coordinate: [208, 428.0]
     rotation: 0
     state: enabled
-- name: blocks_unpack_k_bits_bb_1
-  id: blocks_unpack_k_bits_bb
+- name: blocks_wavfile_source_0
+  id: blocks_wavfile_source
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    k: '8'
+    file: wav_in
     maxoutbuf: '0'
     minoutbuf: '0'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [320, 592.0]
-    rotation: 0
-    state: enabled
-- name: blocks_wavfile_sink_0
-  id: blocks_wavfile_sink
-  parameters:
-    affinity: ''
-    alias: ''
-    append: 'False'
-    bits_per_sample1: FORMAT_FLOAT
-    bits_per_sample2: FORMAT_PCM_16
-    bits_per_sample3: FORMAT_VORBIS
-    bits_per_sample4: FORMAT_PCM_16
-    comment: ''
-    file: wav_out
-    format: FORMAT_WAV
     nchan: '1'
-    samp_rate: int(samp_rate)
+    repeat: 'True'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [968, 504.0]
+    coordinate: [40, 340.0]
     rotation: 0
     state: enabled
 - name: custom_bfsk_demod_0
@@ -273,42 +173,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [232, 748.0]
-    rotation: 0
-    state: enabled
-- name: custom_bfsk_mod_0
-  id: custom_bfsk_mod
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    deviation: deviation
-    fc: passband_fc
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    sps: sps
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [496, 572.0]
-    rotation: 0
-    state: enabled
-- name: custom_packet_formatter_0
-  id: custom_packet_formatter
-  parameters:
-    access_code: access_code
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    packet_size: packet_size
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [616, 356.0]
+    coordinate: [384, 420.0]
     rotation: 0
     state: enabled
 - name: custom_packet_parser_0
@@ -324,7 +189,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [208, 880.0]
+    coordinate: [360, 552.0]
     rotation: 0
     state: enabled
 - name: custom_remove_preamble_0
@@ -340,23 +205,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [512, 880.0]
-    rotation: 0
-    state: enabled
-- name: custom_stream_prepend_0
-  id: custom_stream_prepend
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    garbage_preamble_length_n_bytes: garbage_preamble_length_n_bytes
-    maxoutbuf: '0'
-    minoutbuf: '0'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [352, 344.0]
+    coordinate: [664, 552.0]
     rotation: 0
     state: enabled
 - name: dest_host
@@ -410,23 +259,6 @@ blocks:
     coordinate: [696, 152.0]
     rotation: 0
     state: enabled
-- name: in_file
-  id: parameter
-  parameters:
-    alias: ''
-    comment: ''
-    hide: none
-    label: Input filename
-    short_id: ''
-    type: str
-    value: in.bin
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1216, 24.0]
-    rotation: 0
-    state: enabled
 - name: network_tcp_sink_0
   id: network_tcp_sink
   parameters:
@@ -442,7 +274,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1168, 996.0]
+    coordinate: [1320, 668.0]
     rotation: 0
     state: enabled
 - name: num_pream_packets
@@ -510,7 +342,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [880, 1072.0]
+    coordinate: [1032, 744.0]
     rotation: 0
     state: enabled
 - name: qtgui_waterfall_sink_x_0
@@ -571,7 +403,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [328, 644.0]
+    coordinate: [392, 288.0]
     rotation: 0
     state: enabled
 - name: samp_rate
@@ -608,19 +440,6 @@ blocks:
     coordinate: [920, 24.0]
     rotation: 0
     state: enabled
-- name: virtual_sink_0
-  id: virtual_sink
-  parameters:
-    alias: ''
-    comment: ''
-    stream_id: bytes_tx
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1360, 368.0]
-    rotation: 0
-    state: enabled
 - name: virtual_sink_0_0
   id: virtual_sink
   parameters:
@@ -631,33 +450,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [480, 768.0]
-    rotation: 0
-    state: enabled
-- name: virtual_sink_1_0
-  id: virtual_sink
-  parameters:
-    alias: ''
-    comment: ''
-    stream_id: txsignal
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [984, 648.0]
-    rotation: 0
-    state: enabled
-- name: virtual_sink_4
-  id: virtual_sink
-  parameters:
-    alias: ''
-    comment: ''
-    stream_id: rxsignal
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1560, 640.0]
+    coordinate: [632, 440.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0
@@ -670,88 +463,38 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [24, 904.0]
+    coordinate: [96, 520.0]
     rotation: 0
     state: enabled
-- name: virtual_source_1_0
-  id: virtual_source
-  parameters:
-    alias: ''
-    comment: ''
-    stream_id: rxsignal
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [16, 768.0]
-    rotation: 0
-    state: enabled
-- name: virtual_source_1_0_0
-  id: virtual_source
-  parameters:
-    alias: ''
-    comment: ''
-    stream_id: txsignal
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1176, 640.0]
-    rotation: 0
-    state: enabled
-- name: virtual_source_2
-  id: virtual_source
-  parameters:
-    alias: ''
-    comment: ''
-    stream_id: bytes_tx
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [120, 592.0]
-    rotation: 0
-    state: enabled
-- name: wav_out
+- name: wav_in
   id: parameter
   parameters:
     alias: ''
     comment: ''
     hide: none
-    label: Waveform output
+    label: Waveform file input
     short_id: ''
     type: str
-    value: out.wav
+    value: record.wav
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1392, 152.0]
+    coordinate: [712, 16.0]
     rotation: 0
     state: enabled
 
 connections:
-- [analog_random_source_x_0, '0', custom_stream_prepend_0, '1']
-- [blocks_file_source_0, '0', custom_stream_prepend_0, '0']
-- [blocks_tag_gate_0, '0', virtual_sink_0, '0']
-- [blocks_tag_gate_1, '0', virtual_sink_4, '0']
-- [blocks_throttle2_1, '0', blocks_wavfile_sink_0, '0']
-- [blocks_throttle2_1, '0', virtual_sink_1_0, '0']
-- [blocks_unpack_k_bits_bb_1, '0', custom_bfsk_mod_0, '0']
+- [blocks_throttle2_0, '0', custom_bfsk_demod_0, '0']
+- [blocks_throttle2_0, '0', qtgui_waterfall_sink_x_0, '0']
+- [blocks_wavfile_source_0, '0', blocks_throttle2_0, '0']
 - [custom_bfsk_demod_0, '0', virtual_sink_0_0, '0']
-- [custom_bfsk_mod_0, '0', blocks_throttle2_1, '0']
-- [custom_packet_formatter_0, '0', blocks_tag_gate_0, '0']
 - [custom_packet_parser_0, '0', custom_remove_preamble_0, '0']
 - [custom_packet_parser_0, header_data, blocks_message_debug_1_0, print]
 - [custom_remove_preamble_0, out, blocks_message_debug_1, print]
 - [custom_remove_preamble_0, out, pdu_pdu_to_tagged_stream_0, pdus]
-- [custom_stream_prepend_0, '0', custom_packet_formatter_0, '0']
 - [pdu_pdu_to_tagged_stream_0, '0', network_tcp_sink_0, '0']
 - [virtual_source_0, '0', custom_packet_parser_0, '0']
-- [virtual_source_1_0, '0', custom_bfsk_demod_0, '0']
-- [virtual_source_1_0, '0', qtgui_waterfall_sink_x_0, '0']
-- [virtual_source_1_0_0, '0', blocks_tag_gate_1, '0']
-- [virtual_source_2, '0', blocks_unpack_k_bits_bb_1, '0']
 
 metadata:
   file_format: 1

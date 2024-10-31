@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: BFSK tranceving
+# Title: BFSK Receive
 # GNU Radio version: 3.10.9.2
 
 from PyQt5 import Qt
@@ -15,14 +15,9 @@ import sys
 sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
 
 from custom_bfsk_demod import custom_bfsk_demod  # grc-generated hier_block
-from custom_bfsk_mod import custom_bfsk_mod  # grc-generated hier_block
-from custom_packet_formatter import custom_packet_formatter  # grc-generated hier_block
 from custom_packet_parser import custom_packet_parser  # grc-generated hier_block
 from custom_remove_preamble import custom_remove_preamble  # grc-generated hier_block
-from custom_stream_prepend import custom_stream_prepend  # grc-generated hier_block
 from gnuradio import blocks
-import numpy
-import pmt
 from gnuradio import blocks, gr
 from gnuradio import digital
 from gnuradio import gr
@@ -39,12 +34,12 @@ import sip
 
 
 
-class bfsk_transceive(gr.top_block, Qt.QWidget):
+class bfsk_receive(gr.top_block, Qt.QWidget):
 
-    def __init__(self, dest_host='127.0.0.1', dest_port='42028', deviation=800, in_file='in.bin', num_pream_packets=4, packet_size=8, passband_fc=3000, samp_rate=48000, sps=160, wav_out='out.wav'):
-        gr.top_block.__init__(self, "BFSK tranceving", catch_exceptions=True)
+    def __init__(self, dest_host='127.0.0.1', dest_port='42028', deviation=800, num_pream_packets=4, packet_size=8, passband_fc=3000, samp_rate=48000, sps=160, wav_in='record.wav'):
+        gr.top_block.__init__(self, "BFSK Receive", catch_exceptions=True)
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("BFSK tranceving")
+        self.setWindowTitle("BFSK Receive")
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
@@ -62,7 +57,7 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "bfsk_transceive")
+        self.settings = Qt.QSettings("GNU Radio", "bfsk_receive")
 
         try:
             geometry = self.settings.value("geometry")
@@ -77,13 +72,12 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.dest_host = dest_host
         self.dest_port = dest_port
         self.deviation = deviation
-        self.in_file = in_file
         self.num_pream_packets = num_pream_packets
         self.packet_size = packet_size
         self.passband_fc = passband_fc
         self.samp_rate = samp_rate
         self.sps = sps
-        self.wav_out = wav_out
+        self.wav_in = wav_in
 
         ##################################################
         # Variables
@@ -136,48 +130,21 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.top_layout.addWidget(self._qtgui_waterfall_sink_x_0_win)
         self.pdu_pdu_to_tagged_stream_0 = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         self.network_tcp_sink_0 = network.tcp_sink(gr.sizeof_char, 1, dest_host, int(dest_port),1)
-        self.custom_stream_prepend_0 = custom_stream_prepend(
-            garbage_preamble_length_n_bytes=garbage_preamble_length_n_bytes,
-        )
         self.custom_remove_preamble_0 = custom_remove_preamble(
             num_pream_packets=num_pream_packets,
         )
         self.custom_packet_parser_0 = custom_packet_parser(
             samp_rate=48000,
         )
-        self.custom_packet_formatter_0 = custom_packet_formatter(
-            access_code=access_code,
-            packet_size=packet_size,
-        )
-        self.custom_bfsk_mod_0 = custom_bfsk_mod(
-            deviation=deviation,
-            fc=passband_fc,
-            sps=sps,
-        )
         self.custom_bfsk_demod_0 = custom_bfsk_demod(
             deviation=deviation,
             fc=passband_fc,
             sps=sps,
         )
-        self.blocks_wavfile_sink_0 = blocks.wavfile_sink(
-            wav_out,
-            1,
-            int(samp_rate),
-            blocks.FORMAT_WAV,
-            blocks.FORMAT_FLOAT,
-            False
-            )
-        self.blocks_unpack_k_bits_bb_1 = blocks.unpack_k_bits_bb(8)
-        self.blocks_throttle2_1 = blocks.throttle( gr.sizeof_float*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
-        self.blocks_tag_gate_1 = blocks.tag_gate(gr.sizeof_float * 1, False)
-        self.blocks_tag_gate_1.set_single_key("")
-        self.blocks_tag_gate_0 = blocks.tag_gate(gr.sizeof_char * 1, False)
-        self.blocks_tag_gate_0.set_single_key("")
+        self.blocks_wavfile_source_0 = blocks.wavfile_source(wav_in, True)
+        self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_float*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_message_debug_1_0 = blocks.message_debug(True, gr.log_levels.info)
         self.blocks_message_debug_1 = blocks.message_debug(True, gr.log_levels.info)
-        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_char*1, in_file, False, 0, 0)
-        self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
-        self.analog_random_source_x_0 = blocks.vector_source_b(list(map(int, numpy.random.randint(0, 256, 1000))), True)
 
 
         ##################################################
@@ -186,24 +153,16 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.msg_connect((self.custom_packet_parser_0, 'header_data'), (self.blocks_message_debug_1_0, 'print'))
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.blocks_message_debug_1, 'print'))
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.pdu_pdu_to_tagged_stream_0, 'pdus'))
-        self.connect((self.analog_random_source_x_0, 0), (self.custom_stream_prepend_0, 1))
-        self.connect((self.blocks_file_source_0, 0), (self.custom_stream_prepend_0, 0))
-        self.connect((self.blocks_tag_gate_0, 0), (self.blocks_unpack_k_bits_bb_1, 0))
-        self.connect((self.blocks_tag_gate_1, 0), (self.custom_bfsk_demod_0, 0))
-        self.connect((self.blocks_tag_gate_1, 0), (self.qtgui_waterfall_sink_x_0, 0))
-        self.connect((self.blocks_throttle2_1, 0), (self.blocks_tag_gate_1, 0))
-        self.connect((self.blocks_throttle2_1, 0), (self.blocks_wavfile_sink_0, 0))
-        self.connect((self.blocks_unpack_k_bits_bb_1, 0), (self.custom_bfsk_mod_0, 0))
+        self.connect((self.blocks_throttle2_0, 0), (self.custom_bfsk_demod_0, 0))
+        self.connect((self.blocks_throttle2_0, 0), (self.qtgui_waterfall_sink_x_0, 0))
+        self.connect((self.blocks_wavfile_source_0, 0), (self.blocks_throttle2_0, 0))
         self.connect((self.custom_bfsk_demod_0, 0), (self.custom_packet_parser_0, 0))
-        self.connect((self.custom_bfsk_mod_0, 0), (self.blocks_throttle2_1, 0))
-        self.connect((self.custom_packet_formatter_0, 0), (self.blocks_tag_gate_0, 0))
         self.connect((self.custom_packet_parser_0, 0), (self.custom_remove_preamble_0, 0))
-        self.connect((self.custom_stream_prepend_0, 0), (self.custom_packet_formatter_0, 0))
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.network_tcp_sink_0, 0))
 
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "bfsk_transceive")
+        self.settings = Qt.QSettings("GNU Radio", "bfsk_receive")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -228,14 +187,6 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
     def set_deviation(self, deviation):
         self.deviation = deviation
         self.custom_bfsk_demod_0.set_deviation(self.deviation)
-        self.custom_bfsk_mod_0.set_deviation(self.deviation)
-
-    def get_in_file(self):
-        return self.in_file
-
-    def set_in_file(self, in_file):
-        self.in_file = in_file
-        self.blocks_file_source_0.open(self.in_file, False)
 
     def get_num_pream_packets(self):
         return self.num_pream_packets
@@ -251,7 +202,6 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
     def set_packet_size(self, packet_size):
         self.packet_size = packet_size
         self.set_garbage_preamble_length_n_bytes(self.packet_size*self.num_pream_packets)
-        self.custom_packet_formatter_0.set_packet_size(self.packet_size)
 
     def get_passband_fc(self):
         return self.passband_fc
@@ -259,14 +209,13 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
     def set_passband_fc(self, passband_fc):
         self.passband_fc = passband_fc
         self.custom_bfsk_demod_0.set_fc(self.passband_fc)
-        self.custom_bfsk_mod_0.set_fc(self.passband_fc)
 
     def get_samp_rate(self):
         return self.samp_rate
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
-        self.blocks_throttle2_1.set_sample_rate(self.samp_rate)
+        self.blocks_throttle2_0.set_sample_rate(self.samp_rate)
         self.qtgui_waterfall_sink_x_0.set_frequency_range(0, self.samp_rate)
 
     def get_sps(self):
@@ -275,14 +224,12 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
     def set_sps(self, sps):
         self.sps = sps
         self.custom_bfsk_demod_0.set_sps(self.sps)
-        self.custom_bfsk_mod_0.set_sps(self.sps)
 
-    def get_wav_out(self):
-        return self.wav_out
+    def get_wav_in(self):
+        return self.wav_in
 
-    def set_wav_out(self, wav_out):
-        self.wav_out = wav_out
-        self.blocks_wavfile_sink_0.open(self.wav_out)
+    def set_wav_in(self, wav_in):
+        self.wav_in = wav_in
 
     def get_access_code(self):
         return self.access_code
@@ -290,14 +237,12 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
     def set_access_code(self, access_code):
         self.access_code = access_code
         self.set_format_used(digital.header_format_counter(self.access_code,0,8))
-        self.custom_packet_formatter_0.set_access_code(self.access_code)
 
     def get_garbage_preamble_length_n_bytes(self):
         return self.garbage_preamble_length_n_bytes
 
     def set_garbage_preamble_length_n_bytes(self, garbage_preamble_length_n_bytes):
         self.garbage_preamble_length_n_bytes = garbage_preamble_length_n_bytes
-        self.custom_stream_prepend_0.set_garbage_preamble_length_n_bytes(self.garbage_preamble_length_n_bytes)
 
     def get_format_used(self):
         return self.format_used
@@ -325,9 +270,6 @@ def argument_parser():
         "--deviation", dest="deviation", type=eng_float, default=eng_notation.num_to_str(float(800)),
         help="Set Deviation bandwidth for 2-FSK modulation [default=%(default)r]")
     parser.add_argument(
-        "--in-file", dest="in_file", type=str, default='in.bin',
-        help="Set Input filename [default=%(default)r]")
-    parser.add_argument(
         "--num-pream-packets", dest="num_pream_packets", type=intx, default=4,
         help="Set Number of preamble garbage packets [default=%(default)r]")
     parser.add_argument(
@@ -343,18 +285,18 @@ def argument_parser():
         "--sps", dest="sps", type=intx, default=160,
         help="Set Samples per Symbol [default=%(default)r]")
     parser.add_argument(
-        "--wav-out", dest="wav_out", type=str, default='out.wav',
-        help="Set Waveform output [default=%(default)r]")
+        "--wav-in", dest="wav_in", type=str, default='record.wav',
+        help="Set Waveform file input [default=%(default)r]")
     return parser
 
 
-def main(top_block_cls=bfsk_transceive, options=None):
+def main(top_block_cls=bfsk_receive, options=None):
     if options is None:
         options = argument_parser().parse_args()
 
     qapp = Qt.QApplication(sys.argv)
 
-    tb = top_block_cls(dest_host=options.dest_host, dest_port=options.dest_port, deviation=options.deviation, in_file=options.in_file, num_pream_packets=options.num_pream_packets, packet_size=options.packet_size, passband_fc=options.passband_fc, samp_rate=options.samp_rate, sps=options.sps, wav_out=options.wav_out)
+    tb = top_block_cls(dest_host=options.dest_host, dest_port=options.dest_port, deviation=options.deviation, num_pream_packets=options.num_pream_packets, packet_size=options.packet_size, passband_fc=options.passband_fc, samp_rate=options.samp_rate, sps=options.sps, wav_in=options.wav_in)
 
     tb.start()
 
