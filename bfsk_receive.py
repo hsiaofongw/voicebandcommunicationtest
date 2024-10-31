@@ -30,13 +30,14 @@ from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import gr, pdu
 from gnuradio import network
+from gnuradio import zeromq
 import sip
 
 
 
 class bfsk_receive(gr.top_block, Qt.QWidget):
 
-    def __init__(self, dest_host='127.0.0.1', dest_port='42028', deviation=800, num_pream_packets=4, packet_size=8, passband_fc=3000, samp_rate=48000, sps=160, wav_in='record.wav'):
+    def __init__(self, dest_host='127.0.0.1', dest_port='42028', deviation=600, num_pream_packets=2, packet_size=4, passband_fc=2800, samp_rate=48000, sps=500, wav_in='record.wav', zmq_source='tcp://10.0.4.105:14748'):
         gr.top_block.__init__(self, "BFSK Receive", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("BFSK Receive")
@@ -78,6 +79,7 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self.sps = sps
         self.wav_in = wav_in
+        self.zmq_source = zmq_source
 
         ##################################################
         # Variables
@@ -92,6 +94,7 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
+        self.zeromq_sub_source_0 = zeromq.sub_source(gr.sizeof_float, 1, zmq_source, 100, False, (-1), '', False)
         self.qtgui_waterfall_sink_x_0 = qtgui.waterfall_sink_f(
             1024, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
@@ -141,7 +144,6 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
             fc=passband_fc,
             sps=sps,
         )
-        self.blocks_wavfile_source_0 = blocks.wavfile_source(wav_in, True)
         self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_float*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_message_debug_1_0 = blocks.message_debug(True, gr.log_levels.info)
         self.blocks_message_debug_1 = blocks.message_debug(True, gr.log_levels.info)
@@ -155,10 +157,10 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.pdu_pdu_to_tagged_stream_0, 'pdus'))
         self.connect((self.blocks_throttle2_0, 0), (self.custom_bfsk_demod_0, 0))
         self.connect((self.blocks_throttle2_0, 0), (self.qtgui_waterfall_sink_x_0, 0))
-        self.connect((self.blocks_wavfile_source_0, 0), (self.blocks_throttle2_0, 0))
         self.connect((self.custom_bfsk_demod_0, 0), (self.custom_packet_parser_0, 0))
         self.connect((self.custom_packet_parser_0, 0), (self.custom_remove_preamble_0, 0))
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.network_tcp_sink_0, 0))
+        self.connect((self.zeromq_sub_source_0, 0), (self.blocks_throttle2_0, 0))
 
 
     def closeEvent(self, event):
@@ -231,6 +233,12 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
     def set_wav_in(self, wav_in):
         self.wav_in = wav_in
 
+    def get_zmq_source(self):
+        return self.zmq_source
+
+    def set_zmq_source(self, zmq_source):
+        self.zmq_source = zmq_source
+
     def get_access_code(self):
         return self.access_code
 
@@ -267,26 +275,29 @@ def argument_parser():
         "--dest-port", dest="dest_port", type=str, default='42028',
         help="Set Destination Port [default=%(default)r]")
     parser.add_argument(
-        "--deviation", dest="deviation", type=eng_float, default=eng_notation.num_to_str(float(800)),
+        "--deviation", dest="deviation", type=eng_float, default=eng_notation.num_to_str(float(600)),
         help="Set Deviation bandwidth for 2-FSK modulation [default=%(default)r]")
     parser.add_argument(
-        "--num-pream-packets", dest="num_pream_packets", type=intx, default=4,
+        "--num-pream-packets", dest="num_pream_packets", type=intx, default=2,
         help="Set Number of preamble garbage packets [default=%(default)r]")
     parser.add_argument(
-        "--packet-size", dest="packet_size", type=intx, default=8,
+        "--packet-size", dest="packet_size", type=intx, default=4,
         help="Set Packet Size [default=%(default)r]")
     parser.add_argument(
-        "--passband-fc", dest="passband_fc", type=eng_float, default=eng_notation.num_to_str(float(3000)),
+        "--passband-fc", dest="passband_fc", type=eng_float, default=eng_notation.num_to_str(float(2800)),
         help="Set Passband Center Frequency [default=%(default)r]")
     parser.add_argument(
         "--samp-rate", dest="samp_rate", type=eng_float, default=eng_notation.num_to_str(float(48000)),
         help="Set Sampe Rate [default=%(default)r]")
     parser.add_argument(
-        "--sps", dest="sps", type=intx, default=160,
+        "--sps", dest="sps", type=intx, default=500,
         help="Set Samples per Symbol [default=%(default)r]")
     parser.add_argument(
         "--wav-in", dest="wav_in", type=str, default='record.wav',
         help="Set Waveform file input [default=%(default)r]")
+    parser.add_argument(
+        "--zmq-source", dest="zmq_source", type=str, default='tcp://10.0.4.105:14748',
+        help="Set ZMQ Source [default=%(default)r]")
     return parser
 
 
@@ -296,7 +307,7 @@ def main(top_block_cls=bfsk_receive, options=None):
 
     qapp = Qt.QApplication(sys.argv)
 
-    tb = top_block_cls(dest_host=options.dest_host, dest_port=options.dest_port, deviation=options.deviation, num_pream_packets=options.num_pream_packets, packet_size=options.packet_size, passband_fc=options.passband_fc, samp_rate=options.samp_rate, sps=options.sps, wav_in=options.wav_in)
+    tb = top_block_cls(dest_host=options.dest_host, dest_port=options.dest_port, deviation=options.deviation, num_pream_packets=options.num_pream_packets, packet_size=options.packet_size, passband_fc=options.passband_fc, samp_rate=options.samp_rate, sps=options.sps, wav_in=options.wav_in, zmq_source=options.zmq_source)
 
     tb.start()
 

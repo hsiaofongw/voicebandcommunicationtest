@@ -25,8 +25,9 @@ import numpy
 import pmt
 from gnuradio import blocks, gr
 from gnuradio import digital
-from gnuradio import gr
+from gnuradio import filter
 from gnuradio.filter import firdes
+from gnuradio import gr
 from gnuradio.fft import window
 import signal
 from PyQt5 import Qt
@@ -41,7 +42,7 @@ import sip
 
 class bfsk_transceive(gr.top_block, Qt.QWidget):
 
-    def __init__(self, dest_host='127.0.0.1', dest_port='42028', deviation=800, in_file='in.bin', num_pream_packets=4, packet_size=8, passband_fc=3000, samp_rate=48000, sps=160, wav_out='out.wav'):
+    def __init__(self, dest_host='127.0.0.1', dest_port='42028', deviation=600, in_file='in.bin', num_pream_packets=2, packet_size=4, passband_fc=2800, samp_rate=48000, sps=500, wav_out='out.wav'):
         gr.top_block.__init__(self, "BFSK tranceving", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("BFSK tranceving")
@@ -136,6 +137,7 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.top_layout.addWidget(self._qtgui_waterfall_sink_x_0_win)
         self.pdu_pdu_to_tagged_stream_0 = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         self.network_tcp_sink_0 = network.tcp_sink(gr.sizeof_char, 1, dest_host, int(dest_port),1)
+        self.filter_fft_low_pass_filter_0 = filter.fft_filter_fff(1, firdes.low_pass(1, samp_rate, (passband_fc+deviation), 100, window.WIN_HAMMING, 6.76), 1)
         self.custom_stream_prepend_0 = custom_stream_prepend(
             garbage_preamble_length_n_bytes=garbage_preamble_length_n_bytes,
         )
@@ -195,10 +197,11 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_wavfile_sink_0, 0))
         self.connect((self.blocks_unpack_k_bits_bb_1, 0), (self.custom_bfsk_mod_0, 0))
         self.connect((self.custom_bfsk_demod_0, 0), (self.custom_packet_parser_0, 0))
-        self.connect((self.custom_bfsk_mod_0, 0), (self.blocks_throttle2_1, 0))
+        self.connect((self.custom_bfsk_mod_0, 0), (self.filter_fft_low_pass_filter_0, 0))
         self.connect((self.custom_packet_formatter_0, 0), (self.blocks_tag_gate_0, 0))
         self.connect((self.custom_packet_parser_0, 0), (self.custom_remove_preamble_0, 0))
         self.connect((self.custom_stream_prepend_0, 0), (self.custom_packet_formatter_0, 0))
+        self.connect((self.filter_fft_low_pass_filter_0, 0), (self.blocks_throttle2_1, 0))
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.network_tcp_sink_0, 0))
 
 
@@ -229,6 +232,7 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.deviation = deviation
         self.custom_bfsk_demod_0.set_deviation(self.deviation)
         self.custom_bfsk_mod_0.set_deviation(self.deviation)
+        self.filter_fft_low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, (self.passband_fc+self.deviation), 100, window.WIN_HAMMING, 6.76))
 
     def get_in_file(self):
         return self.in_file
@@ -260,6 +264,7 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.passband_fc = passband_fc
         self.custom_bfsk_demod_0.set_fc(self.passband_fc)
         self.custom_bfsk_mod_0.set_fc(self.passband_fc)
+        self.filter_fft_low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, (self.passband_fc+self.deviation), 100, window.WIN_HAMMING, 6.76))
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -267,6 +272,7 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
         self.blocks_throttle2_1.set_sample_rate(self.samp_rate)
+        self.filter_fft_low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, (self.passband_fc+self.deviation), 100, window.WIN_HAMMING, 6.76))
         self.qtgui_waterfall_sink_x_0.set_frequency_range(0, self.samp_rate)
 
     def get_sps(self):
@@ -322,25 +328,25 @@ def argument_parser():
         "--dest-port", dest="dest_port", type=str, default='42028',
         help="Set Destination Port [default=%(default)r]")
     parser.add_argument(
-        "--deviation", dest="deviation", type=eng_float, default=eng_notation.num_to_str(float(800)),
+        "--deviation", dest="deviation", type=eng_float, default=eng_notation.num_to_str(float(600)),
         help="Set Deviation bandwidth for 2-FSK modulation [default=%(default)r]")
     parser.add_argument(
         "--in-file", dest="in_file", type=str, default='in.bin',
         help="Set Input filename [default=%(default)r]")
     parser.add_argument(
-        "--num-pream-packets", dest="num_pream_packets", type=intx, default=4,
+        "--num-pream-packets", dest="num_pream_packets", type=intx, default=2,
         help="Set Number of preamble garbage packets [default=%(default)r]")
     parser.add_argument(
-        "--packet-size", dest="packet_size", type=intx, default=8,
+        "--packet-size", dest="packet_size", type=intx, default=4,
         help="Set Packet Size [default=%(default)r]")
     parser.add_argument(
-        "--passband-fc", dest="passband_fc", type=eng_float, default=eng_notation.num_to_str(float(3000)),
+        "--passband-fc", dest="passband_fc", type=eng_float, default=eng_notation.num_to_str(float(2800)),
         help="Set Passband Center Frequency [default=%(default)r]")
     parser.add_argument(
         "--samp-rate", dest="samp_rate", type=eng_float, default=eng_notation.num_to_str(float(48000)),
         help="Set Sampe Rate [default=%(default)r]")
     parser.add_argument(
-        "--sps", dest="sps", type=intx, default=160,
+        "--sps", dest="sps", type=intx, default=500,
         help="Set Samples per Symbol [default=%(default)r]")
     parser.add_argument(
         "--wav-out", dest="wav_out", type=str, default='out.wav',

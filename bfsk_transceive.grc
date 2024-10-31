@@ -196,7 +196,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1368, 628.0]
+    coordinate: [1464, 620.0]
     rotation: 0
     state: enabled
 - name: blocks_throttle2_1
@@ -217,7 +217,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [728, 580.0]
+    coordinate: [912, 548.0]
     rotation: 0
     state: enabled
 - name: blocks_unpack_k_bits_bb_1
@@ -233,7 +233,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [320, 592.0]
+    coordinate: [256, 560.0]
     rotation: 0
     state: enabled
 - name: blocks_wavfile_sink_0
@@ -255,7 +255,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [968, 504.0]
+    coordinate: [1176, 464.0]
     rotation: 0
     state: enabled
 - name: custom_bfsk_demod_0
@@ -291,7 +291,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [496, 572.0]
+    coordinate: [432, 540.0]
     rotation: 0
     state: enabled
 - name: custom_packet_formatter_0
@@ -402,12 +402,36 @@ blocks:
     label: Deviation bandwidth for 2-FSK modulation
     short_id: ''
     type: eng_float
-    value: '800'
+    value: '600'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
     coordinate: [696, 152.0]
+    rotation: 0
+    state: enabled
+- name: filter_fft_low_pass_filter_0
+  id: filter_fft_low_pass_filter
+  parameters:
+    affinity: ''
+    alias: ''
+    beta: '6.76'
+    comment: ''
+    cutoff_freq: passband_fc+deviation
+    decim: '1'
+    gain: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    nthreads: '1'
+    samp_rate: samp_rate
+    type: fff
+    width: '100'
+    win: window.WIN_HAMMING
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [672, 488.0]
     rotation: 0
     state: enabled
 - name: in_file
@@ -454,7 +478,7 @@ blocks:
     label: Number of preamble garbage packets
     short_id: ''
     type: intx
-    value: '4'
+    value: '2'
   states:
     bus_sink: false
     bus_source: false
@@ -471,7 +495,7 @@ blocks:
     label: Packet Size
     short_id: ''
     type: intx
-    value: '8'
+    value: '4'
   states:
     bus_sink: false
     bus_source: false
@@ -488,7 +512,7 @@ blocks:
     label: Passband Center Frequency
     short_id: ''
     type: eng_float
-    value: '3000'
+    value: '2800'
   states:
     bus_sink: false
     bus_source: false
@@ -600,7 +624,7 @@ blocks:
     label: Samples per Symbol
     short_id: ''
     type: intx
-    value: '160'
+    value: '500'
   states:
     bus_sink: false
     bus_source: false
@@ -644,7 +668,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [984, 648.0]
+    coordinate: [1144, 624.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_4
@@ -657,7 +681,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1560, 640.0]
+    coordinate: [1672, 632.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0
@@ -696,7 +720,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1176, 640.0]
+    coordinate: [1280, 632.0]
     rotation: 0
     state: enabled
 - name: virtual_source_2
@@ -709,7 +733,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [120, 592.0]
+    coordinate: [56, 560.0]
     rotation: 0
     state: enabled
 - name: wav_out
@@ -739,13 +763,14 @@ connections:
 - [blocks_throttle2_1, '0', virtual_sink_1_0, '0']
 - [blocks_unpack_k_bits_bb_1, '0', custom_bfsk_mod_0, '0']
 - [custom_bfsk_demod_0, '0', virtual_sink_0_0, '0']
-- [custom_bfsk_mod_0, '0', blocks_throttle2_1, '0']
+- [custom_bfsk_mod_0, '0', filter_fft_low_pass_filter_0, '0']
 - [custom_packet_formatter_0, '0', blocks_tag_gate_0, '0']
 - [custom_packet_parser_0, '0', custom_remove_preamble_0, '0']
 - [custom_packet_parser_0, header_data, blocks_message_debug_1_0, print]
 - [custom_remove_preamble_0, out, blocks_message_debug_1, print]
 - [custom_remove_preamble_0, out, pdu_pdu_to_tagged_stream_0, pdus]
 - [custom_stream_prepend_0, '0', custom_packet_formatter_0, '0']
+- [filter_fft_low_pass_filter_0, '0', blocks_throttle2_1, '0']
 - [pdu_pdu_to_tagged_stream_0, '0', network_tcp_sink_0, '0']
 - [virtual_source_0, '0', custom_packet_parser_0, '0']
 - [virtual_source_1_0, '0', custom_bfsk_demod_0, '0']
