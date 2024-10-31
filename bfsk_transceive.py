@@ -42,7 +42,7 @@ import sip
 
 class bfsk_transceive(gr.top_block, Qt.QWidget):
 
-    def __init__(self, dest_host='127.0.0.1', dest_port='42028', deviation=600, in_file='in.bin', num_pream_packets=2, packet_size=4, passband_fc=2800, samp_rate=48000, sps=500, wav_out='out.wav'):
+    def __init__(self, dest_host='127.0.0.1', dest_port='42028', deviation=600, in_file='in.bin', num_pream_packets=2, packet_size=4, passband_fc=2800, samp_rate=48000, sps=5400, wav_out='out.wav'):
         gr.top_block.__init__(self, "BFSK tranceving", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("BFSK tranceving")
@@ -137,7 +137,7 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.top_layout.addWidget(self._qtgui_waterfall_sink_x_0_win)
         self.pdu_pdu_to_tagged_stream_0 = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         self.network_tcp_sink_0 = network.tcp_sink(gr.sizeof_char, 1, dest_host, int(dest_port),1)
-        self.filter_fft_low_pass_filter_0 = filter.fft_filter_fff(1, firdes.low_pass(1, samp_rate, (passband_fc+deviation), 100, window.WIN_HAMMING, 6.76), 1)
+        self.filter_fft_low_pass_filter_0 = filter.fft_filter_fff(1, firdes.low_pass(1, samp_rate, (passband_fc+deviation), 200, window.WIN_HAMMING, 6.76), 1)
         self.custom_stream_prepend_0 = custom_stream_prepend(
             garbage_preamble_length_n_bytes=garbage_preamble_length_n_bytes,
         )
@@ -179,6 +179,16 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.blocks_message_debug_1 = blocks.message_debug(True, gr.log_levels.info)
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_char*1, in_file, False, 0, 0)
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
+        self.band_pass_filter_0 = filter.interp_fir_filter_fff(
+            1,
+            firdes.band_pass(
+                1,
+                samp_rate,
+                (passband_fc-deviation),
+                (passband_fc+deviation),
+                200,
+                window.WIN_HAMMING,
+                6.76))
         self.analog_random_source_x_0 = blocks.vector_source_b(list(map(int, numpy.random.randint(0, 256, 1000))), True)
 
 
@@ -189,10 +199,11 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.blocks_message_debug_1, 'print'))
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.pdu_pdu_to_tagged_stream_0, 'pdus'))
         self.connect((self.analog_random_source_x_0, 0), (self.custom_stream_prepend_0, 1))
+        self.connect((self.band_pass_filter_0, 0), (self.custom_bfsk_demod_0, 0))
+        self.connect((self.band_pass_filter_0, 0), (self.qtgui_waterfall_sink_x_0, 0))
         self.connect((self.blocks_file_source_0, 0), (self.custom_stream_prepend_0, 0))
         self.connect((self.blocks_tag_gate_0, 0), (self.blocks_unpack_k_bits_bb_1, 0))
-        self.connect((self.blocks_tag_gate_1, 0), (self.custom_bfsk_demod_0, 0))
-        self.connect((self.blocks_tag_gate_1, 0), (self.qtgui_waterfall_sink_x_0, 0))
+        self.connect((self.blocks_tag_gate_1, 0), (self.band_pass_filter_0, 0))
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_tag_gate_1, 0))
         self.connect((self.blocks_throttle2_1, 0), (self.blocks_wavfile_sink_0, 0))
         self.connect((self.blocks_unpack_k_bits_bb_1, 0), (self.custom_bfsk_mod_0, 0))
@@ -230,9 +241,10 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
 
     def set_deviation(self, deviation):
         self.deviation = deviation
+        self.band_pass_filter_0.set_taps(firdes.band_pass(1, self.samp_rate, (self.passband_fc-self.deviation), (self.passband_fc+self.deviation), 200, window.WIN_HAMMING, 6.76))
         self.custom_bfsk_demod_0.set_deviation(self.deviation)
         self.custom_bfsk_mod_0.set_deviation(self.deviation)
-        self.filter_fft_low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, (self.passband_fc+self.deviation), 100, window.WIN_HAMMING, 6.76))
+        self.filter_fft_low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, (self.passband_fc+self.deviation), 200, window.WIN_HAMMING, 6.76))
 
     def get_in_file(self):
         return self.in_file
@@ -262,17 +274,19 @@ class bfsk_transceive(gr.top_block, Qt.QWidget):
 
     def set_passband_fc(self, passband_fc):
         self.passband_fc = passband_fc
+        self.band_pass_filter_0.set_taps(firdes.band_pass(1, self.samp_rate, (self.passband_fc-self.deviation), (self.passband_fc+self.deviation), 200, window.WIN_HAMMING, 6.76))
         self.custom_bfsk_demod_0.set_fc(self.passband_fc)
         self.custom_bfsk_mod_0.set_fc(self.passband_fc)
-        self.filter_fft_low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, (self.passband_fc+self.deviation), 100, window.WIN_HAMMING, 6.76))
+        self.filter_fft_low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, (self.passband_fc+self.deviation), 200, window.WIN_HAMMING, 6.76))
 
     def get_samp_rate(self):
         return self.samp_rate
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
+        self.band_pass_filter_0.set_taps(firdes.band_pass(1, self.samp_rate, (self.passband_fc-self.deviation), (self.passband_fc+self.deviation), 200, window.WIN_HAMMING, 6.76))
         self.blocks_throttle2_1.set_sample_rate(self.samp_rate)
-        self.filter_fft_low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, (self.passband_fc+self.deviation), 100, window.WIN_HAMMING, 6.76))
+        self.filter_fft_low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, (self.passband_fc+self.deviation), 200, window.WIN_HAMMING, 6.76))
         self.qtgui_waterfall_sink_x_0.set_frequency_range(0, self.samp_rate)
 
     def get_sps(self):
@@ -346,7 +360,7 @@ def argument_parser():
         "--samp-rate", dest="samp_rate", type=eng_float, default=eng_notation.num_to_str(float(48000)),
         help="Set Sampe Rate [default=%(default)r]")
     parser.add_argument(
-        "--sps", dest="sps", type=intx, default=500,
+        "--sps", dest="sps", type=intx, default=5400,
         help="Set Samples per Symbol [default=%(default)r]")
     parser.add_argument(
         "--wav-out", dest="wav_out", type=str, default='out.wav',

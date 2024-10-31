@@ -109,6 +109,31 @@ blocks:
     coordinate: [80, 400.0]
     rotation: 0
     state: enabled
+- name: band_pass_filter_0
+  id: band_pass_filter
+  parameters:
+    affinity: ''
+    alias: ''
+    beta: '6.76'
+    comment: ''
+    decim: '1'
+    gain: '1'
+    high_cutoff_freq: passband_fc+deviation
+    interp: '1'
+    low_cutoff_freq: passband_fc-deviation
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_rate: samp_rate
+    type: interp_fir_filter_fff
+    width: '200'
+    win: window.WIN_HAMMING
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [264, 672.0]
+    rotation: 0
+    state: enabled
 - name: blocks_file_source_0
   id: blocks_file_source
   parameters:
@@ -273,7 +298,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [232, 748.0]
+    coordinate: [680, 732.0]
     rotation: 0
     state: enabled
 - name: custom_bfsk_mod_0
@@ -425,7 +450,7 @@ blocks:
     nthreads: '1'
     samp_rate: samp_rate
     type: fff
-    width: '100'
+    width: '200'
     win: window.WIN_HAMMING
   states:
     bus_sink: false
@@ -595,7 +620,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [328, 644.0]
+    coordinate: [496, 640.0]
     rotation: 0
     state: enabled
 - name: samp_rate
@@ -624,7 +649,7 @@ blocks:
     label: Samples per Symbol
     short_id: ''
     type: intx
-    value: '500'
+    value: '5400'
   states:
     bus_sink: false
     bus_source: false
@@ -655,7 +680,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [480, 768.0]
+    coordinate: [928, 752.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_1_0
@@ -756,6 +781,8 @@ blocks:
 
 connections:
 - [analog_random_source_x_0, '0', custom_stream_prepend_0, '1']
+- [band_pass_filter_0, '0', custom_bfsk_demod_0, '0']
+- [band_pass_filter_0, '0', qtgui_waterfall_sink_x_0, '0']
 - [blocks_file_source_0, '0', custom_stream_prepend_0, '0']
 - [blocks_tag_gate_0, '0', virtual_sink_0, '0']
 - [blocks_tag_gate_1, '0', virtual_sink_4, '0']
@@ -773,8 +800,7 @@ connections:
 - [filter_fft_low_pass_filter_0, '0', blocks_throttle2_1, '0']
 - [pdu_pdu_to_tagged_stream_0, '0', network_tcp_sink_0, '0']
 - [virtual_source_0, '0', custom_packet_parser_0, '0']
-- [virtual_source_1_0, '0', custom_bfsk_demod_0, '0']
-- [virtual_source_1_0, '0', qtgui_waterfall_sink_x_0, '0']
+- [virtual_source_1_0, '0', band_pass_filter_0, '0']
 - [virtual_source_1_0_0, '0', blocks_tag_gate_1, '0']
 - [virtual_source_2, '0', blocks_unpack_k_bits_bb_1, '0']
 

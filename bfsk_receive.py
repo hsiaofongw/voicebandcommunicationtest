@@ -20,8 +20,9 @@ from custom_remove_preamble import custom_remove_preamble  # grc-generated hier_
 from gnuradio import blocks
 from gnuradio import blocks, gr
 from gnuradio import digital
-from gnuradio import gr
+from gnuradio import filter
 from gnuradio.filter import firdes
+from gnuradio import gr
 from gnuradio.fft import window
 import signal
 from PyQt5 import Qt
@@ -30,14 +31,13 @@ from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import gr, pdu
 from gnuradio import network
-from gnuradio import zeromq
 import sip
 
 
 
 class bfsk_receive(gr.top_block, Qt.QWidget):
 
-    def __init__(self, dest_host='127.0.0.1', dest_port='42028', deviation=600, num_pream_packets=2, packet_size=4, passband_fc=2800, samp_rate=48000, sps=500, wav_in='record.wav', zmq_source='tcp://10.0.4.105:14748'):
+    def __init__(self, dest_host='127.0.0.1', dest_port='42028', deviation=600, num_pream_packets=2, packet_size=4, passband_fc=2800, samp_rate=48000, sps=5400, wav_in='record.wav', zmq_source='tcp://10.0.4.105:14748'):
         gr.top_block.__init__(self, "BFSK Receive", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("BFSK Receive")
@@ -94,7 +94,6 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
-        self.zeromq_sub_source_0 = zeromq.sub_source(gr.sizeof_float, 1, zmq_source, 100, False, (-1), '', False)
         self.qtgui_waterfall_sink_x_0 = qtgui.waterfall_sink_f(
             1024, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
@@ -144,9 +143,20 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
             fc=passband_fc,
             sps=sps,
         )
+        self.blocks_wavfile_source_0 = blocks.wavfile_source(wav_in, True)
         self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_float*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_message_debug_1_0 = blocks.message_debug(True, gr.log_levels.info)
         self.blocks_message_debug_1 = blocks.message_debug(True, gr.log_levels.info)
+        self.band_pass_filter_0 = filter.interp_fir_filter_fff(
+            1,
+            firdes.band_pass(
+                1,
+                samp_rate,
+                (passband_fc-deviation),
+                (passband_fc+deviation),
+                200,
+                window.WIN_HAMMING,
+                6.76))
 
 
         ##################################################
@@ -155,12 +165,13 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
         self.msg_connect((self.custom_packet_parser_0, 'header_data'), (self.blocks_message_debug_1_0, 'print'))
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.blocks_message_debug_1, 'print'))
         self.msg_connect((self.custom_remove_preamble_0, 'out'), (self.pdu_pdu_to_tagged_stream_0, 'pdus'))
-        self.connect((self.blocks_throttle2_0, 0), (self.custom_bfsk_demod_0, 0))
-        self.connect((self.blocks_throttle2_0, 0), (self.qtgui_waterfall_sink_x_0, 0))
+        self.connect((self.band_pass_filter_0, 0), (self.custom_bfsk_demod_0, 0))
+        self.connect((self.band_pass_filter_0, 0), (self.qtgui_waterfall_sink_x_0, 0))
+        self.connect((self.blocks_throttle2_0, 0), (self.band_pass_filter_0, 0))
+        self.connect((self.blocks_wavfile_source_0, 0), (self.blocks_throttle2_0, 0))
         self.connect((self.custom_bfsk_demod_0, 0), (self.custom_packet_parser_0, 0))
         self.connect((self.custom_packet_parser_0, 0), (self.custom_remove_preamble_0, 0))
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.network_tcp_sink_0, 0))
-        self.connect((self.zeromq_sub_source_0, 0), (self.blocks_throttle2_0, 0))
 
 
     def closeEvent(self, event):
@@ -188,6 +199,7 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
 
     def set_deviation(self, deviation):
         self.deviation = deviation
+        self.band_pass_filter_0.set_taps(firdes.band_pass(1, self.samp_rate, (self.passband_fc-self.deviation), (self.passband_fc+self.deviation), 200, window.WIN_HAMMING, 6.76))
         self.custom_bfsk_demod_0.set_deviation(self.deviation)
 
     def get_num_pream_packets(self):
@@ -210,6 +222,7 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
 
     def set_passband_fc(self, passband_fc):
         self.passband_fc = passband_fc
+        self.band_pass_filter_0.set_taps(firdes.band_pass(1, self.samp_rate, (self.passband_fc-self.deviation), (self.passband_fc+self.deviation), 200, window.WIN_HAMMING, 6.76))
         self.custom_bfsk_demod_0.set_fc(self.passband_fc)
 
     def get_samp_rate(self):
@@ -217,6 +230,7 @@ class bfsk_receive(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
+        self.band_pass_filter_0.set_taps(firdes.band_pass(1, self.samp_rate, (self.passband_fc-self.deviation), (self.passband_fc+self.deviation), 200, window.WIN_HAMMING, 6.76))
         self.blocks_throttle2_0.set_sample_rate(self.samp_rate)
         self.qtgui_waterfall_sink_x_0.set_frequency_range(0, self.samp_rate)
 
@@ -290,7 +304,7 @@ def argument_parser():
         "--samp-rate", dest="samp_rate", type=eng_float, default=eng_notation.num_to_str(float(48000)),
         help="Set Sampe Rate [default=%(default)r]")
     parser.add_argument(
-        "--sps", dest="sps", type=intx, default=500,
+        "--sps", dest="sps", type=intx, default=5400,
         help="Set Samples per Symbol [default=%(default)r]")
     parser.add_argument(
         "--wav-in", dest="wav_in", type=str, default='record.wav',

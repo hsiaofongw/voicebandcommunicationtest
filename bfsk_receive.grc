@@ -89,6 +89,31 @@ blocks:
     coordinate: [184, 108.0]
     rotation: 0
     state: enabled
+- name: band_pass_filter_0
+  id: band_pass_filter
+  parameters:
+    affinity: ''
+    alias: ''
+    beta: '6.76'
+    comment: ''
+    decim: '1'
+    gain: '1'
+    high_cutoff_freq: passband_fc+deviation
+    interp: '1'
+    low_cutoff_freq: passband_fc-deviation
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_rate: samp_rate
+    type: interp_fir_filter_fff
+    width: '200'
+    win: window.WIN_HAMMING
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [472, 304.0]
+    rotation: 0
+    state: enabled
 - name: blocks_message_debug_1
   id: blocks_message_debug
   parameters:
@@ -137,7 +162,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [208, 428.0]
+    coordinate: [280, 356.0]
     rotation: 0
     state: enabled
 - name: blocks_wavfile_source_0
@@ -155,9 +180,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [40, 340.0]
+    coordinate: [72, 404.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: custom_bfsk_demod_0
   id: custom_bfsk_demod
   parameters:
@@ -173,7 +198,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [384, 420.0]
+    coordinate: [768, 404.0]
     rotation: 0
     state: enabled
 - name: custom_packet_parser_0
@@ -403,7 +428,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [392, 288.0]
+    coordinate: [712, 272.0]
     rotation: 0
     state: enabled
 - name: samp_rate
@@ -432,7 +457,7 @@ blocks:
     label: Samples per Symbol
     short_id: ''
     type: intx
-    value: '500'
+    value: '5400'
   states:
     bus_sink: false
     bus_source: false
@@ -450,7 +475,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [632, 440.0]
+    coordinate: [1016, 424.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0
@@ -503,9 +528,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [104, 200.0]
+    coordinate: [32, 232.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: zmq_source
   id: parameter
   parameters:
@@ -525,8 +550,9 @@ blocks:
     state: enabled
 
 connections:
-- [blocks_throttle2_0, '0', custom_bfsk_demod_0, '0']
-- [blocks_throttle2_0, '0', qtgui_waterfall_sink_x_0, '0']
+- [band_pass_filter_0, '0', custom_bfsk_demod_0, '0']
+- [band_pass_filter_0, '0', qtgui_waterfall_sink_x_0, '0']
+- [blocks_throttle2_0, '0', band_pass_filter_0, '0']
 - [blocks_wavfile_source_0, '0', blocks_throttle2_0, '0']
 - [custom_bfsk_demod_0, '0', virtual_sink_0_0, '0']
 - [custom_packet_parser_0, '0', custom_remove_preamble_0, '0']
