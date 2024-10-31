@@ -11,7 +11,12 @@
 
 from PyQt5 import Qt
 from gnuradio import qtgui
+import os
+import sys
+sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
+
 from PyQt5 import QtCore
+from custom_bfsk_mod import custom_bfsk_mod  # grc-generated hier_block
 from gnuradio import analog
 import math
 from gnuradio import blocks
@@ -21,7 +26,6 @@ from gnuradio import filter
 from gnuradio.filter import firdes
 from gnuradio import gr
 from gnuradio.fft import window
-import sys
 import signal
 from PyQt5 import Qt
 from argparse import ArgumentParser
@@ -72,6 +76,7 @@ class test_vco(gr.top_block, Qt.QWidget):
         self.variable_low_pass_filter_taps_0 = variable_low_pass_filter_taps_0 = firdes.low_pass(1.0, samp_rate, fc,100, window.WIN_HAMMING, 6.76)
         self.sps = sps = int(samp_rate/32)
         self.sensitivity = sensitivity = 2*math.pi*deviation
+        self.delay = delay = 1
 
         ##################################################
         # Blocks
@@ -120,11 +125,11 @@ class test_vco(gr.top_block, Qt.QWidget):
             (int(1.5*samp_rate/sps)), #size
             samp_rate, #samp_rate
             "", #name
-            1, #number of inputs
+            2, #number of inputs
             None # parent
         )
         self.qtgui_time_sink_x_1.set_update_time(0.10)
-        self.qtgui_time_sink_x_1.set_y_axis(-1, 1)
+        self.qtgui_time_sink_x_1.set_y_axis(-2, 2)
 
         self.qtgui_time_sink_x_1.set_y_label('Amplitude', "")
 
@@ -137,7 +142,7 @@ class test_vco(gr.top_block, Qt.QWidget):
         self.qtgui_time_sink_x_1.enable_stem_plot(False)
 
 
-        labels = ['Signal 1', 'Signal 2', 'Signal 3', 'Signal 4', 'Signal 5',
+        labels = ['Tx', 'Rx', 'Signal 3', 'Signal 4', 'Signal 5',
             'Signal 6', 'Signal 7', 'Signal 8', 'Signal 9', 'Signal 10']
         widths = [1, 1, 1, 1, 1,
             1, 1, 1, 1, 1]
@@ -151,7 +156,7 @@ class test_vco(gr.top_block, Qt.QWidget):
             -1, -1, -1, -1, -1]
 
 
-        for i in range(1):
+        for i in range(2):
             if len(labels[i]) == 0:
                 self.qtgui_time_sink_x_1.set_line_label(i, "Data {0}".format(i))
             else:
@@ -178,6 +183,11 @@ class test_vco(gr.top_block, Qt.QWidget):
             128,
             [])
         self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
+        self.custom_bfsk_mod_0 = custom_bfsk_mod(
+            deviation=deviation,
+            fc=fc,
+            sps=sps,
+        )
         self.blocks_wavfile_sink_0 = blocks.wavfile_sink(
             'vco.wav',
             1,
@@ -186,15 +196,12 @@ class test_vco(gr.top_block, Qt.QWidget):
             blocks.FORMAT_FLOAT,
             False
             )
-        self.blocks_vco_f_0 = blocks.vco_f(samp_rate, sensitivity, 1)
+        self.blocks_unpack_k_bits_bb_0 = blocks.unpack_k_bits_bb(8)
         self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_float*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
-        self.blocks_repeat_0 = blocks.repeat(gr.sizeof_char*1, sps)
-        self.blocks_multiply_const_vxx_1 = blocks.multiply_const_ff(2)
+        self.blocks_delay_0 = blocks.delay(gr.sizeof_float*1, delay)
+        self.blocks_char_to_float_1_0 = blocks.char_to_float(1, 1)
         self.blocks_char_to_float_1 = blocks.char_to_float(1, 1)
-        self.blocks_char_to_float_0 = blocks.char_to_float(1, 1)
-        self.blocks_add_const_vxx_1 = blocks.add_const_ff((-1))
-        self.blocks_add_const_vxx_0 = blocks.add_const_ff((fc/(sensitivity/(2*math.pi))))
-        self.analog_random_source_x_0 = blocks.vector_source_b(list(map(int, numpy.random.randint(0, 2, 1000))), True)
+        self.analog_random_source_x_0 = blocks.vector_source_b(list(map(int, numpy.random.randint(0, 256, 1000))), True)
         self.analog_quadrature_demod_cf_1 = analog.quadrature_demod_cf((samp_rate/(2*math.pi*deviation)))
         self.analog_agc_xx_0 = analog.agc_ff((1e-4), 1.0, 1.0, 2)
 
@@ -204,17 +211,16 @@ class test_vco(gr.top_block, Qt.QWidget):
         ##################################################
         self.connect((self.analog_agc_xx_0, 0), (self.digital_symbol_sync_xx_0, 0))
         self.connect((self.analog_quadrature_demod_cf_1, 0), (self.analog_agc_xx_0, 0))
-        self.connect((self.analog_random_source_x_0, 0), (self.blocks_repeat_0, 0))
-        self.connect((self.blocks_add_const_vxx_0, 0), (self.blocks_vco_f_0, 0))
-        self.connect((self.blocks_add_const_vxx_1, 0), (self.blocks_add_const_vxx_0, 0))
-        self.connect((self.blocks_char_to_float_0, 0), (self.blocks_multiply_const_vxx_1, 0))
-        self.connect((self.blocks_char_to_float_1, 0), (self.qtgui_time_sink_x_1, 0))
-        self.connect((self.blocks_multiply_const_vxx_1, 0), (self.blocks_add_const_vxx_1, 0))
-        self.connect((self.blocks_repeat_0, 0), (self.blocks_char_to_float_0, 0))
+        self.connect((self.analog_random_source_x_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
+        self.connect((self.blocks_char_to_float_1, 0), (self.qtgui_time_sink_x_1, 1))
+        self.connect((self.blocks_char_to_float_1_0, 0), (self.blocks_delay_0, 0))
+        self.connect((self.blocks_delay_0, 0), (self.qtgui_time_sink_x_1, 0))
         self.connect((self.blocks_throttle2_0, 0), (self.blocks_wavfile_sink_0, 0))
-        self.connect((self.blocks_vco_f_0, 0), (self.blocks_throttle2_0, 0))
-        self.connect((self.blocks_vco_f_0, 0), (self.freq_xlating_fir_filter_xxx_0, 0))
-        self.connect((self.blocks_vco_f_0, 0), (self.qtgui_waterfall_sink_x_1, 0))
+        self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.blocks_char_to_float_1_0, 0))
+        self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.custom_bfsk_mod_0, 0))
+        self.connect((self.custom_bfsk_mod_0, 0), (self.blocks_throttle2_0, 0))
+        self.connect((self.custom_bfsk_mod_0, 0), (self.freq_xlating_fir_filter_xxx_0, 0))
+        self.connect((self.custom_bfsk_mod_0, 0), (self.qtgui_waterfall_sink_x_1, 0))
         self.connect((self.digital_binary_slicer_fb_0, 0), (self.blocks_char_to_float_1, 0))
         self.connect((self.digital_symbol_sync_xx_0, 0), (self.digital_binary_slicer_fb_0, 0))
         self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.analog_quadrature_demod_cf_1, 0))
@@ -246,7 +252,7 @@ class test_vco(gr.top_block, Qt.QWidget):
     def set_fc(self, fc):
         self.fc = fc
         self.set_variable_low_pass_filter_taps_0(firdes.low_pass(1.0, self.samp_rate, self.fc, 100, window.WIN_HAMMING, 6.76))
-        self.blocks_add_const_vxx_0.set_k((self.fc/(self.sensitivity/(2*math.pi))))
+        self.custom_bfsk_mod_0.set_fc(self.fc)
         self.freq_xlating_fir_filter_xxx_0.set_center_freq(self.fc)
 
     def get_deviation(self):
@@ -256,6 +262,7 @@ class test_vco(gr.top_block, Qt.QWidget):
         self.deviation = deviation
         self.set_sensitivity(2*math.pi*self.deviation)
         self.analog_quadrature_demod_cf_1.set_gain((self.samp_rate/(2*math.pi*self.deviation)))
+        self.custom_bfsk_mod_0.set_deviation(self.deviation)
 
     def get_variable_low_pass_filter_taps_0(self):
         return self.variable_low_pass_filter_taps_0
@@ -269,7 +276,7 @@ class test_vco(gr.top_block, Qt.QWidget):
 
     def set_sps(self, sps):
         self.sps = sps
-        self.blocks_repeat_0.set_interpolation(self.sps)
+        self.custom_bfsk_mod_0.set_sps(self.sps)
         self.digital_symbol_sync_xx_0.set_sps(self.sps)
 
     def get_sensitivity(self):
@@ -277,7 +284,13 @@ class test_vco(gr.top_block, Qt.QWidget):
 
     def set_sensitivity(self, sensitivity):
         self.sensitivity = sensitivity
-        self.blocks_add_const_vxx_0.set_k((self.fc/(self.sensitivity/(2*math.pi))))
+
+    def get_delay(self):
+        return self.delay
+
+    def set_delay(self, delay):
+        self.delay = delay
+        self.blocks_delay_0.set_dly(int(self.delay))
 
 
 
