@@ -16,21 +16,19 @@ import sys
 sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
 
 from PyQt5 import QtCore
+from custom_bfsk_demod import custom_bfsk_demod  # grc-generated hier_block
 from custom_bfsk_mod import custom_bfsk_mod  # grc-generated hier_block
-from gnuradio import analog
-import math
 from gnuradio import blocks
 import numpy
-from gnuradio import digital
-from gnuradio import filter
-from gnuradio.filter import firdes
 from gnuradio import gr
+from gnuradio.filter import firdes
 from gnuradio.fft import window
 import signal
 from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
+import math
 import sip
 
 
@@ -73,7 +71,7 @@ class test_vco(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate = 48000
         self.fc = fc = 2500
         self.deviation = deviation = 600
-        self.variable_low_pass_filter_taps_0 = variable_low_pass_filter_taps_0 = firdes.low_pass(1.0, samp_rate, fc,100, window.WIN_HAMMING, 6.76)
+        self.variable_low_pass_filter_taps_0 = variable_low_pass_filter_taps_0 = firdes.low_pass(1.0, samp_rate, fc+deviation,100, window.WIN_HAMMING, 6.76)
         self.sps = sps = int(samp_rate/32)
         self.sensitivity = sensitivity = 2*math.pi*deviation
         self.delay = delay = 1
@@ -169,21 +167,12 @@ class test_vco(gr.top_block, Qt.QWidget):
 
         self._qtgui_time_sink_x_1_win = sip.wrapinstance(self.qtgui_time_sink_x_1.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_1_win)
-        self.freq_xlating_fir_filter_xxx_0 = filter.freq_xlating_fir_filter_fcc(1, variable_low_pass_filter_taps_0, fc, samp_rate)
-        self.digital_symbol_sync_xx_0 = digital.symbol_sync_ff(
-            digital.TED_EARLY_LATE,
-            sps,
-            0.045,
-            1.0,
-            1.0,
-            1.5,
-            1,
-            digital.constellation_bpsk().base(),
-            digital.IR_MMSE_8TAP,
-            128,
-            [])
-        self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
         self.custom_bfsk_mod_0 = custom_bfsk_mod(
+            deviation=deviation,
+            fc=fc,
+            sps=sps,
+        )
+        self.custom_bfsk_demod_0 = custom_bfsk_demod(
             deviation=deviation,
             fc=fc,
             sps=sps,
@@ -202,15 +191,11 @@ class test_vco(gr.top_block, Qt.QWidget):
         self.blocks_char_to_float_1_0 = blocks.char_to_float(1, 1)
         self.blocks_char_to_float_1 = blocks.char_to_float(1, 1)
         self.analog_random_source_x_0 = blocks.vector_source_b(list(map(int, numpy.random.randint(0, 256, 1000))), True)
-        self.analog_quadrature_demod_cf_1 = analog.quadrature_demod_cf((samp_rate/(2*math.pi*deviation)))
-        self.analog_agc_xx_0 = analog.agc_ff((1e-4), 1.0, 1.0, 2)
 
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.analog_agc_xx_0, 0), (self.digital_symbol_sync_xx_0, 0))
-        self.connect((self.analog_quadrature_demod_cf_1, 0), (self.analog_agc_xx_0, 0))
         self.connect((self.analog_random_source_x_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
         self.connect((self.blocks_char_to_float_1, 0), (self.qtgui_time_sink_x_1, 1))
         self.connect((self.blocks_char_to_float_1_0, 0), (self.blocks_delay_0, 0))
@@ -218,12 +203,10 @@ class test_vco(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_throttle2_0, 0), (self.blocks_wavfile_sink_0, 0))
         self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.blocks_char_to_float_1_0, 0))
         self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.custom_bfsk_mod_0, 0))
+        self.connect((self.custom_bfsk_demod_0, 0), (self.blocks_char_to_float_1, 0))
         self.connect((self.custom_bfsk_mod_0, 0), (self.blocks_throttle2_0, 0))
-        self.connect((self.custom_bfsk_mod_0, 0), (self.freq_xlating_fir_filter_xxx_0, 0))
+        self.connect((self.custom_bfsk_mod_0, 0), (self.custom_bfsk_demod_0, 0))
         self.connect((self.custom_bfsk_mod_0, 0), (self.qtgui_waterfall_sink_x_1, 0))
-        self.connect((self.digital_binary_slicer_fb_0, 0), (self.blocks_char_to_float_1, 0))
-        self.connect((self.digital_symbol_sync_xx_0, 0), (self.digital_binary_slicer_fb_0, 0))
-        self.connect((self.freq_xlating_fir_filter_xxx_0, 0), (self.analog_quadrature_demod_cf_1, 0))
 
 
     def closeEvent(self, event):
@@ -240,8 +223,7 @@ class test_vco(gr.top_block, Qt.QWidget):
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
         self.set_sps(int(self.samp_rate/32))
-        self.set_variable_low_pass_filter_taps_0(firdes.low_pass(1.0, self.samp_rate, self.fc, 100, window.WIN_HAMMING, 6.76))
-        self.analog_quadrature_demod_cf_1.set_gain((self.samp_rate/(2*math.pi*self.deviation)))
+        self.set_variable_low_pass_filter_taps_0(firdes.low_pass(1.0, self.samp_rate, self.fc+self.deviation, 100, window.WIN_HAMMING, 6.76))
         self.blocks_throttle2_0.set_sample_rate(self.samp_rate)
         self.qtgui_time_sink_x_1.set_samp_rate(self.samp_rate)
         self.qtgui_waterfall_sink_x_1.set_frequency_range(0, self.samp_rate)
@@ -251,9 +233,9 @@ class test_vco(gr.top_block, Qt.QWidget):
 
     def set_fc(self, fc):
         self.fc = fc
-        self.set_variable_low_pass_filter_taps_0(firdes.low_pass(1.0, self.samp_rate, self.fc, 100, window.WIN_HAMMING, 6.76))
+        self.set_variable_low_pass_filter_taps_0(firdes.low_pass(1.0, self.samp_rate, self.fc+self.deviation, 100, window.WIN_HAMMING, 6.76))
+        self.custom_bfsk_demod_0.set_fc(self.fc)
         self.custom_bfsk_mod_0.set_fc(self.fc)
-        self.freq_xlating_fir_filter_xxx_0.set_center_freq(self.fc)
 
     def get_deviation(self):
         return self.deviation
@@ -261,7 +243,8 @@ class test_vco(gr.top_block, Qt.QWidget):
     def set_deviation(self, deviation):
         self.deviation = deviation
         self.set_sensitivity(2*math.pi*self.deviation)
-        self.analog_quadrature_demod_cf_1.set_gain((self.samp_rate/(2*math.pi*self.deviation)))
+        self.set_variable_low_pass_filter_taps_0(firdes.low_pass(1.0, self.samp_rate, self.fc+self.deviation, 100, window.WIN_HAMMING, 6.76))
+        self.custom_bfsk_demod_0.set_deviation(self.deviation)
         self.custom_bfsk_mod_0.set_deviation(self.deviation)
 
     def get_variable_low_pass_filter_taps_0(self):
@@ -269,15 +252,14 @@ class test_vco(gr.top_block, Qt.QWidget):
 
     def set_variable_low_pass_filter_taps_0(self, variable_low_pass_filter_taps_0):
         self.variable_low_pass_filter_taps_0 = variable_low_pass_filter_taps_0
-        self.freq_xlating_fir_filter_xxx_0.set_taps(self.variable_low_pass_filter_taps_0)
 
     def get_sps(self):
         return self.sps
 
     def set_sps(self, sps):
         self.sps = sps
+        self.custom_bfsk_demod_0.set_sps(self.sps)
         self.custom_bfsk_mod_0.set_sps(self.sps)
-        self.digital_symbol_sync_xx_0.set_sps(self.sps)
 
     def get_sensitivity(self):
         return self.sensitivity
