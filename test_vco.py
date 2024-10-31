@@ -69,11 +69,10 @@ class test_vco(gr.top_block, Qt.QWidget):
         # Variables
         ##################################################
         self.samp_rate = samp_rate = 48000
-        self.fc = fc = 2500
         self.deviation = deviation = 600
-        self.variable_low_pass_filter_taps_0 = variable_low_pass_filter_taps_0 = firdes.low_pass(1.0, samp_rate, fc+deviation,100, window.WIN_HAMMING, 6.76)
         self.sps = sps = int(samp_rate/32)
         self.sensitivity = sensitivity = 2*math.pi*deviation
+        self.fc = fc = 2500
         self.delay = delay = 1
 
         ##################################################
@@ -223,19 +222,9 @@ class test_vco(gr.top_block, Qt.QWidget):
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
         self.set_sps(int(self.samp_rate/32))
-        self.set_variable_low_pass_filter_taps_0(firdes.low_pass(1.0, self.samp_rate, self.fc+self.deviation, 100, window.WIN_HAMMING, 6.76))
         self.blocks_throttle2_0.set_sample_rate(self.samp_rate)
         self.qtgui_time_sink_x_1.set_samp_rate(self.samp_rate)
         self.qtgui_waterfall_sink_x_1.set_frequency_range(0, self.samp_rate)
-
-    def get_fc(self):
-        return self.fc
-
-    def set_fc(self, fc):
-        self.fc = fc
-        self.set_variable_low_pass_filter_taps_0(firdes.low_pass(1.0, self.samp_rate, self.fc+self.deviation, 100, window.WIN_HAMMING, 6.76))
-        self.custom_bfsk_demod_0.set_fc(self.fc)
-        self.custom_bfsk_mod_0.set_fc(self.fc)
 
     def get_deviation(self):
         return self.deviation
@@ -243,15 +232,8 @@ class test_vco(gr.top_block, Qt.QWidget):
     def set_deviation(self, deviation):
         self.deviation = deviation
         self.set_sensitivity(2*math.pi*self.deviation)
-        self.set_variable_low_pass_filter_taps_0(firdes.low_pass(1.0, self.samp_rate, self.fc+self.deviation, 100, window.WIN_HAMMING, 6.76))
         self.custom_bfsk_demod_0.set_deviation(self.deviation)
         self.custom_bfsk_mod_0.set_deviation(self.deviation)
-
-    def get_variable_low_pass_filter_taps_0(self):
-        return self.variable_low_pass_filter_taps_0
-
-    def set_variable_low_pass_filter_taps_0(self, variable_low_pass_filter_taps_0):
-        self.variable_low_pass_filter_taps_0 = variable_low_pass_filter_taps_0
 
     def get_sps(self):
         return self.sps
@@ -266,6 +248,14 @@ class test_vco(gr.top_block, Qt.QWidget):
 
     def set_sensitivity(self, sensitivity):
         self.sensitivity = sensitivity
+
+    def get_fc(self):
+        return self.fc
+
+    def set_fc(self, fc):
+        self.fc = fc
+        self.custom_bfsk_demod_0.set_fc(self.fc)
+        self.custom_bfsk_mod_0.set_fc(self.fc)
 
     def get_delay(self):
         return self.delay
