@@ -9,8 +9,6 @@
 # Author: ubuntu
 # GNU Radio version: 3.10.9.2
 
-from PyQt5 import Qt
-from gnuradio import qtgui
 from gnuradio import blocks
 import pmt
 from gnuradio import blocks, gr
@@ -20,52 +18,26 @@ from gnuradio.filter import firdes
 from gnuradio.fft import window
 import sys
 import signal
-from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import gr, pdu
+from gnuradio import network
 
 
 
-class test_header_payload_demux(gr.top_block, Qt.QWidget):
+
+class test_header_payload_demux(gr.top_block):
 
     def __init__(self):
         gr.top_block.__init__(self, "Header/Payload demux demo", catch_exceptions=True)
-        Qt.QWidget.__init__(self)
-        self.setWindowTitle("Header/Payload demux demo")
-        qtgui.util.check_set_qss()
-        try:
-            self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
-        except BaseException as exc:
-            print(f"Qt GUI: Could not set Icon: {str(exc)}", file=sys.stderr)
-        self.top_scroll_layout = Qt.QVBoxLayout()
-        self.setLayout(self.top_scroll_layout)
-        self.top_scroll = Qt.QScrollArea()
-        self.top_scroll.setFrameStyle(Qt.QFrame.NoFrame)
-        self.top_scroll_layout.addWidget(self.top_scroll)
-        self.top_scroll.setWidgetResizable(True)
-        self.top_widget = Qt.QWidget()
-        self.top_scroll.setWidget(self.top_widget)
-        self.top_layout = Qt.QVBoxLayout(self.top_widget)
-        self.top_grid_layout = Qt.QGridLayout()
-        self.top_layout.addLayout(self.top_grid_layout)
-
-        self.settings = Qt.QSettings("GNU Radio", "test_header_payload_demux")
-
-        try:
-            geometry = self.settings.value("geometry")
-            if geometry:
-                self.restoreGeometry(geometry)
-        except BaseException as exc:
-            print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 
         ##################################################
         # Variables
         ##################################################
         self.access_code = access_code = "11100001010110101110100010010011"
-        self.samp_rate = samp_rate = 32000
-        self.format_used = format_used = digital.header_format_default(access_code,0)
+        self.samp_rate = samp_rate = 48000
+        self.format_used = format_used = digital.header_format_counter(access_code,0,1)
         self.access_code_cplx = access_code_cplx = [(complex(x)-0.5)*2 for x in list(access_code)]
 
         ##################################################
@@ -74,10 +46,11 @@ class test_header_payload_demux(gr.top_block, Qt.QWidget):
 
         self.pdu_tagged_stream_to_pdu_0 = pdu.tagged_stream_to_pdu(gr.types.byte_t, 'payload symbols')
         self.pdu_pdu_to_tagged_stream_0 = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
+        self.network_udp_sink_0 = network.udp_sink(gr.sizeof_char, 1, '127.0.0.1', 47898, 0, 16, False)
         self.digital_protocol_parser_b_0 = digital.protocol_parser_b(format_used)
         self.digital_protocol_formatter_bb_0 = digital.protocol_formatter_bb(format_used, "packet_len")
         self.digital_header_payload_demux_0 = digital.header_payload_demux(
-            (len(access_code)+(2*2*8)),
+            (12*8),
             1,
             0,
             "payload symbols",
@@ -102,9 +75,11 @@ class test_header_payload_demux(gr.top_block, Qt.QWidget):
         self.blocks_null_sink_1 = blocks.null_sink(gr.sizeof_float*1)
         self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_float*1)
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(2)
-        self.blocks_message_strobe_0 = blocks.message_strobe(pmt.cons(pmt.PMT_NIL, pmt.init_u8vector(16, [0x48,0x65,0x6c,0x6c,0x6f,0x2c,0x20,0x57,0x6f,0x72,0x6c,0x64,0x21])), 1000)
+        self.blocks_message_strobe_0 = blocks.message_strobe(pmt.cons(pmt.PMT_NIL, pmt.init_u8vector(16, [0x48,0x65,0x6c,0x6c,0x6f,0x2c,0x20,0x57,0x6f,0x72,0x6c,0x64,0x21,0x0a])), 1000)
         self.blocks_message_debug_1 = blocks.message_debug(True, gr.log_levels.info)
         self.blocks_float_to_complex_0 = blocks.float_to_complex(1)
+        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_char*1, 'out.bin', False)
+        self.blocks_file_sink_0.set_unbuffered(False)
         self.blocks_complex_to_float_1 = blocks.complex_to_float(1)
         self.blocks_complex_to_float_0 = blocks.complex_to_float(1)
         self.blocks_char_to_float_0 = blocks.char_to_float(1, 1)
@@ -126,6 +101,7 @@ class test_header_payload_demux(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_float_to_complex_0, 0), (self.digital_corr_est_cc_0, 0))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_float_to_complex_0, 0))
         self.connect((self.blocks_repack_bits_bb_0, 0), (self.digital_crc32_bb_1, 0))
+        self.connect((self.blocks_tag_gate_0, 0), (self.blocks_file_sink_0, 0))
         self.connect((self.blocks_tag_gate_0, 0), (self.blocks_unpack_k_bits_bb_0, 0))
         self.connect((self.blocks_tagged_stream_mux_0, 0), (self.blocks_tag_gate_0, 0))
         self.connect((self.blocks_unpack_k_bits_bb_0, 0), (self.blocks_char_to_float_0, 0))
@@ -135,6 +111,7 @@ class test_header_payload_demux(gr.top_block, Qt.QWidget):
         self.connect((self.digital_corr_est_cc_0, 0), (self.digital_header_payload_demux_0, 0))
         self.connect((self.digital_crc32_bb_0, 0), (self.blocks_tagged_stream_mux_0, 1))
         self.connect((self.digital_crc32_bb_0, 0), (self.digital_protocol_formatter_bb_0, 0))
+        self.connect((self.digital_crc32_bb_1, 0), (self.network_udp_sink_0, 0))
         self.connect((self.digital_crc32_bb_1, 0), (self.pdu_tagged_stream_to_pdu_0, 0))
         self.connect((self.digital_header_payload_demux_0, 0), (self.blocks_complex_to_float_0, 0))
         self.connect((self.digital_header_payload_demux_0, 1), (self.blocks_complex_to_float_1, 0))
@@ -142,21 +119,13 @@ class test_header_payload_demux(gr.top_block, Qt.QWidget):
         self.connect((self.pdu_pdu_to_tagged_stream_0, 0), (self.digital_crc32_bb_0, 0))
 
 
-    def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "test_header_payload_demux")
-        self.settings.setValue("geometry", self.saveGeometry())
-        self.stop()
-        self.wait()
-
-        event.accept()
-
     def get_access_code(self):
         return self.access_code
 
     def set_access_code(self, access_code):
         self.access_code = access_code
         self.set_access_code_cplx([(complex(x)-0.5)*2 for x in list(self.access_code)])
-        self.set_format_used(digital.header_format_default(self.access_code,0))
+        self.set_format_used(digital.header_format_counter(self.access_code,0,1))
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -180,29 +149,26 @@ class test_header_payload_demux(gr.top_block, Qt.QWidget):
 
 
 def main(top_block_cls=test_header_payload_demux, options=None):
-
-    qapp = Qt.QApplication(sys.argv)
-
     tb = top_block_cls()
-
-    tb.start()
-
-    tb.show()
 
     def sig_handler(sig=None, frame=None):
         tb.stop()
         tb.wait()
 
-        Qt.QApplication.quit()
+        sys.exit(0)
 
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)
 
-    timer = Qt.QTimer()
-    timer.start(500)
-    timer.timeout.connect(lambda: None)
+    tb.start()
 
-    qapp.exec_()
+    try:
+        input('Press Enter to quit: ')
+    except EOFError:
+        pass
+    tb.stop()
+    tb.wait()
+
 
 if __name__ == '__main__':
     main()
